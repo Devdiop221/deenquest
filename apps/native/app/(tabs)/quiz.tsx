@@ -1,6 +1,6 @@
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
-import { useOfflineQuizzes } from '../../../lib/offline-trpc';
+import { useOfflineQuizzes } from '../../lib/offline-trpc';
 
 export default function QuizScreen() {
   const { data: quizzes, isLoading, isOffline } = useOfflineQuizzes();
@@ -32,7 +32,7 @@ export default function QuizScreen() {
   };
 
   return (
-    <ScrollView className="flex-1 bg-deen-secondary">
+    <ScrollView className="flex-1 bg-deen-secondary" contentContainerStyle={{ paddingBottom: 120 }}>
       <View className="p-6">
         {isOffline && (
           <View className="bg-deen-warning/20 border border-deen-warning rounded-2xl p-4 mb-6">
@@ -42,16 +42,33 @@ export default function QuizScreen() {
           </View>
         )}
 
-        <Text className="text-3xl text-deen-dark mb-8" style={{ fontFamily: 'SpaceGrotesk_700Bold' }}>
-          Islamic Quizzes
-        </Text>
+        <View className="flex-row items-center justify-between mb-8">
+          <Text className="text-3xl text-deen-dark" style={{ fontFamily: 'SpaceGrotesk_700Bold' }}>
+            Islamic Quizzes
+          </Text>
+          <TouchableOpacity
+            onPress={() => router.push('/quiz-progress')}
+            className="bg-white px-4 py-2 rounded-xl shadow-sm"
+          >
+            <Text className="text-deen-primary" style={{ fontFamily: 'Urbanist_600SemiBold' }}>
+              Progress
+            </Text>
+          </TouchableOpacity>
+        </View>
 
         <View className="space-y-4">
           {quizzes?.map((quiz) => (
             <TouchableOpacity
               key={quiz.id}
-              className="bg-white rounded-2xl p-6 shadow-sm"
+              className="bg-white rounded-2xl p-6"
               onPress={() => router.push(`/quiz/${quiz.id}`)}
+              style={{
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 8,
+                elevation: 3,
+              }}
             >
               <View className="flex-row justify-between items-start mb-3">
                 <Text className="text-xl text-deen-dark flex-1" style={{ fontFamily: 'SpaceGrotesk_600SemiBold' }}>

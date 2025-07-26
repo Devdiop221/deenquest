@@ -18,7 +18,7 @@ export const COLORS = {
     700: "#374151",
     800: "#1f2937",
     900: "#111827",
-  }
+  },
 };
 
 export const NAV_THEME = {

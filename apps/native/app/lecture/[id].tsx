@@ -1,15 +1,28 @@
 import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import { trpc } from '../../utils/trpc';
 import { AudioPlayer } from '../../components/audio-player';
 
 export default function LectureDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [hasCompleted, setHasCompleted] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
 
   const { data: lecture, isLoading } = trpc.lectures.getById.useQuery({ id: id! });
+  const { data: favorites } = trpc.favorites.getAll.useQuery();
+  const addFavoriteMutation = trpc.favorites.add.useMutation();
+  const removeFavoriteMutation = trpc.favorites.remove.useMutation();
   const markCompletedMutation = trpc.lectures.markCompleted.useMutation();
+
+  // Check if lecture is in favorites
+  useEffect(() => {
+    if (favorites?.lectures && id) {
+      const isInFavorites = favorites.lectures.some(fav => fav.id === id);
+      setIsFavorite(isInFavorites);
+    }
+  }, [favorites, id]);
 
   if (isLoading) {
     return (
@@ -26,6 +39,26 @@ export default function LectureDetailScreen() {
       </View>
     );
   }
+
+  const handleToggleFavorite = async () => {
+    try {
+      if (isFavorite) {
+        await removeFavoriteMutation.mutateAsync({
+          contentId: id!,
+          contentType: 'lecture',
+        });
+        setIsFavorite(false);
+      } else {
+        await addFavoriteMutation.mutateAsync({
+          contentId: id!,
+          contentType: 'lecture',
+        });
+        setIsFavorite(true);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to update favorites');
+    }
+  };
 
   const handleAudioComplete = () => {
     if (!hasCompleted) {
@@ -68,17 +101,31 @@ export default function LectureDetailScreen() {
     <ScrollView className="flex-1 bg-white">
       <View className="p-6">
         <View className="mb-6">
-          <Text className="text-sm text-gray-500 mb-2">
-            {lecture.category?.icon} {lecture.category?.name}
-          </Text>
-          <Text className="text-2xl font-bold text-gray-800 mb-2">
-            {lecture.title}
-          </Text>
-          {lecture.description && (
-            <Text className="text-gray-600">
-              {lecture.description}
-            </Text>
-          )}
+          <View className="flex-row justify-between items-start mb-2">
+            <View className="flex-1">
+              <Text className="text-sm text-deen-primary mb-2" style={{ fontFamily: 'Urbanist_400Regular' }}>
+                {lecture.category?.icon} {lecture.category?.name}
+              </Text>
+              <Text className="text-2xl text-deen-dark mb-2" style={{ fontFamily: 'SpaceGrotesk_700Bold' }}>
+                {lecture.title}
+              </Text>
+              {lecture.description && (
+                <Text className="text-gray-600" style={{ fontFamily: 'Urbanist_400Regular' }}>
+                  {lecture.description}
+                </Text>
+              )}
+            </View>
+            <TouchableOpacity
+              onPress={handleToggleFavorite}
+              className="p-2"
+            >
+              <Ionicons
+                name={isFavorite ? "heart" : "heart-outline"}
+                size={28}
+                color={isFavorite ? "#ef4444" : "#6b7280"}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Audio Player */}

@@ -42,7 +42,7 @@ const DARK_THEME: Theme = {
 };
 
 export const unstable_settings = {
-  initialRouteName: "(drawer)",
+  initialRouteName: "(tabs)",
 };
 
 
@@ -89,12 +89,15 @@ export default function RootLayout() {
             <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
             <GestureHandlerRootView style={{ flex: 1 }}>
               <Stack>
-                <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                 <Stack.Screen name="auth/sign-in" options={{ headerShown: false }} />
                 <Stack.Screen name="auth/sign-up" options={{ headerShown: false }} />
+                <Stack.Screen name="category/[id]" options={{ headerShown: false }} />
                 <Stack.Screen name="quiz/[id]" options={{ headerShown: false }} />
                 <Stack.Screen name="lecture/[id]" options={{ headerShown: false }} />
                 <Stack.Screen name="quiz-progress" options={{ headerShown: false }} />
+                <Stack.Screen name="stats" options={{ headerShown: false }} />
+                <Stack.Screen name="search" options={{ headerShown: false }} />
                 <Stack.Screen
                   name="modal"
                   options={{ title: "Modal", presentation: "modal" }}

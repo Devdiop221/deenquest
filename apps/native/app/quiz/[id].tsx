@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, ScrollView, Alert } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Ionicons } from '@expo/vector-icons';
 import { trpc } from "../../utils/trpc";
 import { useOfflineQuizSubmission } from "../../lib/offline-trpc";
 
@@ -9,13 +10,25 @@ export default function QuizDetailScreen() {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [startTime] = useState(Date.now());
+  const [isFavorite, setIsFavorite] = useState(false);
 
   const { data: quiz, isLoading } = trpc.quizzes.getById.useQuery({ id: id! });
+  const { data: favorites } = trpc.favorites.getAll.useQuery();
+  const addFavoriteMutation = trpc.favorites.add.useMutation();
+  const removeFavoriteMutation = trpc.favorites.remove.useMutation();
   const {
     submitAnswer,
     isLoading: isSubmitting,
     isOffline,
   } = useOfflineQuizSubmission();
+
+  // Check if quiz is in favorites
+  useEffect(() => {
+    if (favorites?.quizzes && id) {
+      const isInFavorites = favorites.quizzes.some(fav => fav.id === id);
+      setIsFavorite(isInFavorites);
+    }
+  }, [favorites, id]);
 
   if (isLoading) {
     return (
@@ -32,6 +45,26 @@ export default function QuizDetailScreen() {
       </View>
     );
   }
+
+  const handleToggleFavorite = async () => {
+    try {
+      if (isFavorite) {
+        await removeFavoriteMutation.mutateAsync({
+          contentId: id!,
+          contentType: 'quiz',
+        });
+        setIsFavorite(false);
+      } else {
+        await addFavoriteMutation.mutateAsync({
+          contentId: id!,
+          contentType: 'quiz',
+        });
+        setIsFavorite(true);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to update favorites');
+    }
+  };
 
   const handleSubmit = async () => {
     if (selectedAnswer === null) {
@@ -77,24 +110,38 @@ export default function QuizDetailScreen() {
       <View className="p-6">
         {/* Header */}
         <View className="mb-6">
-          <Text
-            className="text-sm text-deen-primary mb-2"
-            style={{ fontFamily: "Urbanist_400Regular" }}
-          >
-            {quiz.category?.icon} {quiz.category?.name}
-          </Text>
-          <Text
-            className="text-2xl text-deen-dark mb-4"
-            style={{ fontFamily: "SpaceGrotesk_700Bold" }}
-          >
-            {quiz.title}
-          </Text>
-          <Text
-            className="text-sm text-gray-500"
-            style={{ fontFamily: "Urbanist_400Regular" }}
-          >
-            30 Questions
-          </Text>
+          <View className="flex-row justify-between items-start mb-2">
+            <View className="flex-1">
+              <Text
+                className="text-sm text-deen-primary mb-2"
+                style={{ fontFamily: "Urbanist_400Regular" }}
+              >
+                {quiz.category?.icon} {quiz.category?.name}
+              </Text>
+              <Text
+                className="text-2xl text-deen-dark mb-4"
+                style={{ fontFamily: "SpaceGrotesk_700Bold" }}
+              >
+                {quiz.title}
+              </Text>
+              <Text
+                className="text-sm text-gray-500"
+                style={{ fontFamily: "Urbanist_400Regular" }}
+              >
+                30 Questions
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={handleToggleFavorite}
+              className="p-2"
+            >
+              <Ionicons
+                name={isFavorite ? "heart" : "heart-outline"}
+                size={28}
+                color={isFavorite ? "#ef4444" : "#6b7280"}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Question Number */}
