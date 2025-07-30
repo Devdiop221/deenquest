@@ -1,9 +1,10 @@
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
-import { useOfflineLectures } from '../../lib/offline-trpc';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { trpc } from '../../lib/trpc';
 
 export default function LecturesScreen() {
-  const { data: lectures, isLoading, isOffline } = useOfflineLectures();
+  const { data: lectures, isLoading } = trpc.lectures.getAll.useQuery();
 
   if (isLoading) {
     return (
@@ -19,15 +20,9 @@ export default function LecturesScreen() {
   };
 
   return (
-    <ScrollView className="flex-1 bg-deen-secondary" contentContainerStyle={{ paddingBottom: 120 }}>
-      <View className="p-6">
-        {isOffline && (
-          <View className="bg-deen-warning/20 border border-deen-warning rounded-2xl p-4 mb-6">
-            <Text className="text-deen-warning text-center" style={{ fontFamily: 'Urbanist_500Medium' }}>
-              📱 Offline mode. Downloaded lectures available.
-            </Text>
-          </View>
-        )}
+    <SafeAreaView className="flex-1 bg-deen-secondary">
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 120 }}>
+        <View className="p-6">
 
         <View className="flex-row items-center justify-between mb-8">
           <Text className="text-3xl text-deen-dark" style={{ fontFamily: 'SpaceGrotesk_700Bold' }}>
@@ -41,10 +36,10 @@ export default function LecturesScreen() {
         </View>
 
         <View className="space-y-4">
-          {lectures?.map((lecture) => (
+          {lectures?.map((lecture, index) => (
             <TouchableOpacity
               key={lecture.id}
-              className="bg-white rounded-2xl p-6"
+              className="bg-white rounded-2xl p-6 mb-4"
               onPress={() => router.push(`/lecture/${lecture.id}`)}
               style={{
                 shadowColor: '#000',
@@ -54,35 +49,55 @@ export default function LecturesScreen() {
                 elevation: 3,
               }}
             >
-              <Text className="text-xl text-deen-dark mb-2" style={{ fontFamily: 'SpaceGrotesk_600SemiBold' }}>
-                {lecture.title}
-              </Text>
+              <View className="flex-row items-start mb-3">
+                <View className="bg-deen-secondary w-12 h-12 rounded-2xl items-center justify-center mr-4">
+                  <Text className="text-2xl">{lecture.category?.icon}</Text>
+                </View>
+                <View className="flex-1">
+                  <Text className="text-xl text-deen-dark mb-1" style={{ fontFamily: 'SpaceGrotesk_600SemiBold' }}>
+                    {lecture.title}
+                  </Text>
+                  <Text className="text-sm text-deen-primary" style={{ fontFamily: 'Urbanist_500Medium' }}>
+                    {lecture.category?.name}
+                  </Text>
+                </View>
+                <View className="bg-deen-primary px-3 py-1 rounded-full">
+                  <Text className="text-white text-xs" style={{ fontFamily: 'Urbanist_600SemiBold' }}>
+                    Story {index + 1}
+                  </Text>
+                </View>
+              </View>
 
               {lecture.description && (
-                <Text className="text-gray-600 mb-4" style={{ fontFamily: 'Urbanist_400Regular' }}>
+                <Text className="text-gray-600 mb-4 leading-6" style={{ fontFamily: 'Urbanist_400Regular' }}>
                   {lecture.description}
                 </Text>
               )}
 
               <View className="flex-row justify-between items-center">
                 <View className="flex-row items-center">
-                  <Text className="text-sm text-gray-500 mr-4" style={{ fontFamily: 'Urbanist_400Regular' }}>
-                    {lecture.category?.icon} {lecture.category?.name}
-                  </Text>
                   {lecture.duration && (
-                    <Text className="text-sm text-gray-500" style={{ fontFamily: 'Urbanist_400Regular' }}>
-                      🕐 {formatDuration(lecture.duration)}
-                    </Text>
+                    <View className="flex-row items-center bg-gray-100 px-3 py-1 rounded-full mr-3">
+                      <Text className="text-xs text-gray-600" style={{ fontFamily: 'Urbanist_500Medium' }}>
+                        🎧 {formatDuration(lecture.duration)}
+                      </Text>
+                    </View>
                   )}
+                  <View className="flex-row items-center bg-green-100 px-3 py-1 rounded-full">
+                    <Text className="text-xs text-green-700" style={{ fontFamily: 'Urbanist_600SemiBold' }}>
+                      +{lecture.xpReward} XP
+                    </Text>
+                  </View>
                 </View>
-                <Text className="text-sm text-deen-accent" style={{ fontFamily: 'Urbanist_600SemiBold' }}>
-                  +{lecture.xpReward} XP
-                </Text>
+                <View className="bg-deen-primary p-2 rounded-full">
+                  <Text className="text-white text-xs">▶️</Text>
+                </View>
               </View>
             </TouchableOpacity>
           ))}
         </View>
-      </View>
-    </ScrollView>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }

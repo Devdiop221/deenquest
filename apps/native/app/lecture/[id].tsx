@@ -1,20 +1,19 @@
-import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useState, useEffect } from 'react';
-import { Ionicons } from '@expo/vector-icons';
-import { trpc } from '../../utils/trpc';
-import { AudioPlayer } from '../../components/audio-player';
+import { Play, Pause, SkipBack, SkipForward, Heart, BookOpen } from 'lucide-react-native';
+import { trpc } from '../../lib/trpc';
 
-export default function LectureDetailScreen() {
+export default function LectureScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [hasCompleted, setHasCompleted] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
 
   const { data: lecture, isLoading } = trpc.lectures.getById.useQuery({ id: id! });
   const { data: favorites } = trpc.favorites.getAll.useQuery();
   const addFavoriteMutation = trpc.favorites.add.useMutation();
   const removeFavoriteMutation = trpc.favorites.remove.useMutation();
-  const markCompletedMutation = trpc.lectures.markCompleted.useMutation();
 
   // Check if lecture is in favorites
   useEffect(() => {
@@ -26,16 +25,21 @@ export default function LectureDetailScreen() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 justify-center items-center bg-white">
-        <Text className="text-lg">Loading lecture...</Text>
+      <View className="flex-1 justify-center items-center bg-deen-secondary">
+        <BookOpen size={48} color="#015055" />
+        <Text className="text-lg mt-4" style={{ fontFamily: 'Urbanist_500Medium' }}>
+          Loading story...
+        </Text>
       </View>
     );
   }
 
   if (!lecture) {
     return (
-      <View className="flex-1 justify-center items-center bg-white">
-        <Text className="text-lg text-red-600">Lecture not found</Text>
+      <View className="flex-1 justify-center items-center bg-deen-secondary">
+        <Text className="text-lg text-red-600" style={{ fontFamily: 'Urbanist_500Medium' }}>
+          Story not found
+        </Text>
       </View>
     );
   }
@@ -60,122 +64,207 @@ export default function LectureDetailScreen() {
     }
   };
 
-  const handleAudioComplete = () => {
-    if (!hasCompleted) {
-      handleMarkCompleted();
-    }
+  const togglePlayPause = () => {
+    setIsPlaying(!isPlaying);
+    // Here you would integrate with actual audio player
   };
 
-  const handleMarkCompleted = async () => {
-    if (hasCompleted) return;
-
-    try {
-      const result = await markCompletedMutation.mutateAsync({
-        lectureId: id!,
-      });
-
-      setHasCompleted(true);
-
-      Alert.alert(
-        'Lecture Completed! 🎉',
-        `Great job! You earned ${result.xpEarned} XP for completing this lecture.`,
-        [
-          {
-            text: 'Continue',
-            onPress: () => router.back(),
-          },
-        ]
-      );
-    } catch (error) {
-      Alert.alert('Error', 'Failed to mark lecture as completed');
-    }
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const formatDuration = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
+  const duration = lecture.duration || 0;
+  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <ScrollView className="flex-1 bg-white">
-      <View className="p-6">
-        <View className="mb-6">
-          <View className="flex-row justify-between items-start mb-2">
-            <View className="flex-1">
-              <Text className="text-sm text-deen-primary mb-2" style={{ fontFamily: 'Urbanist_400Regular' }}>
-                {lecture.category?.icon} {lecture.category?.name}
-              </Text>
-              <Text className="text-2xl text-deen-dark mb-2" style={{ fontFamily: 'SpaceGrotesk_700Bold' }}>
-                {lecture.title}
-              </Text>
-              {lecture.description && (
-                <Text className="text-gray-600" style={{ fontFamily: 'Urbanist_400Regular' }}>
-                  {lecture.description}
+    <View className="flex-1 bg-deen-secondary">
+      <ScrollView className="flex-1">
+        <View className="p-6">
+          {/* Header */}
+          <View className="bg-white rounded-3xl p-6 mb-6 shadow-sm">
+            <View className="flex-row items-center justify-between mb-4">
+              <View className="bg-deen-secondary px-3 py-1 rounded-full">
+                <Text
+                  className="text-deen-primary text-sm"
+                  style={{ fontFamily: "Urbanist_600SemiBold" }}
+                >
+                  {lecture.category?.icon} {lecture.category?.name}
                 </Text>
-              )}
+              </View>
+              <TouchableOpacity
+                onPress={handleToggleFavorite}
+                className="p-2 rounded-xl bg-gray-50"
+              >
+                <Heart
+                  size={24}
+                  color={isFavorite ? "#ef4444" : "#6b7280"}
+                  fill={isFavorite ? "#ef4444" : "transparent"}
+                  strokeWidth={2}
+                />
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              onPress={handleToggleFavorite}
-              className="p-2"
+
+            <Text
+              className="text-2xl text-deen-dark mb-3"
+              style={{ fontFamily: "SpaceGrotesk_700Bold" }}
             >
-              <Ionicons
-                name={isFavorite ? "heart" : "heart-outline"}
-                size={28}
-                color={isFavorite ? "#ef4444" : "#6b7280"}
-              />
-            </TouchableOpacity>
+              {lecture.title}
+            </Text>
+
+            {lecture.description && (
+              <Text
+                className="text-gray-600 mb-4"
+                style={{ fontFamily: "Urbanist_400Regular" }}
+              >
+                {lecture.description}
+              </Text>
+            )}
+
+            <View className="flex-row items-center justify-between">
+              <Text
+                className="text-gray-500 text-sm"
+                style={{ fontFamily: "Urbanist_400Regular" }}
+              >
+                Duration: {formatTime(duration)}
+              </Text>
+              <View className="flex-row items-center">
+                <BookOpen size={16} color="#10b981" />
+                <Text
+                  className="text-deen-accent ml-1 text-sm"
+                  style={{ fontFamily: "Urbanist_600SemiBold" }}
+                >
+                  +{lecture.xpReward} XP
+                </Text>
+              </View>
+            </View>
           </View>
-        </View>
 
-        {/* Audio Player */}
-        <AudioPlayer
-          lectureId={id!}
-          audioUrl={lecture.audioUrl}
-          title={lecture.title}
-          onComplete={handleAudioComplete}
-        />
+          {/* Audio Player */}
+          <View className="bg-white rounded-3xl p-6 mb-6 shadow-sm">
+            <Text
+              className="text-lg text-deen-dark mb-4 text-center"
+              style={{ fontFamily: "SpaceGrotesk_600SemiBold" }}
+            >
+              🎧 Audio Player
+            </Text>
 
-        {/* Text Content */}
-        <View className="bg-white border border-gray-200 rounded-lg p-4 mb-6">
-          <Text className="text-lg font-semibold text-gray-800 mb-3">
-            Story Text
-          </Text>
-          <Text className="text-gray-700 leading-6">
-            {lecture.textContent}
-          </Text>
-        </View>
+            {/* Progress Bar */}
+            <View className="mb-6">
+              <View className="bg-gray-200 rounded-full h-2 mb-2">
+                <View
+                  className="bg-deen-primary rounded-full h-2"
+                  style={{ width: `${progress}%` }}
+                />
+              </View>
+              <View className="flex-row justify-between">
+                <Text
+                  className="text-gray-500 text-sm"
+                  style={{ fontFamily: "Urbanist_400Regular" }}
+                >
+                  {formatTime(currentTime)}
+                </Text>
+                <Text
+                  className="text-gray-500 text-sm"
+                  style={{ fontFamily: "Urbanist_400Regular" }}
+                >
+                  {formatTime(duration)}
+                </Text>
+              </View>
+            </View>
 
-        {/* Complete Button */}
-        {!hasCompleted && (
+            {/* Player Controls */}
+            <View className="flex-row items-center justify-center space-x-6">
+              <TouchableOpacity
+                className="p-3 rounded-full bg-gray-100"
+                onPress={() => setCurrentTime(Math.max(0, currentTime - 15))}
+              >
+                <SkipBack size={24} color="#015055" />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                className="p-4 rounded-full bg-deen-primary"
+                onPress={togglePlayPause}
+                style={{
+                  shadowColor: '#015055',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.2,
+                  shadowRadius: 12,
+                  elevation: 8,
+                }}
+              >
+                {isPlaying ? (
+                  <Pause size={32} color="white" fill="white" />
+                ) : (
+                  <Play size={32} color="white" fill="white" />
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                className="p-3 rounded-full bg-gray-100"
+                onPress={() => setCurrentTime(Math.min(duration, currentTime + 15))}
+              >
+                <SkipForward size={24} color="#015055" />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Story Text */}
+          <View className="bg-white rounded-3xl p-6 mb-6 shadow-sm">
+            <Text
+              className="text-lg text-deen-dark mb-4"
+              style={{ fontFamily: "SpaceGrotesk_600SemiBold" }}
+            >
+              📖 Story Text
+            </Text>
+
+            <ScrollView
+              className="max-h-96"
+              showsVerticalScrollIndicator={false}
+            >
+              <Text
+                className="text-gray-700 leading-7"
+                style={{ fontFamily: "Urbanist_400Regular" }}
+              >
+                {lecture.textContent}
+              </Text>
+            </ScrollView>
+          </View>
+
+          {/* Complete Button */}
           <TouchableOpacity
-            className="bg-blue-600 py-4 px-6 rounded-lg mb-4"
-            onPress={handleMarkCompleted}
-            disabled={markCompletedMutation.isPending}
+            className="bg-deen-primary py-5 px-6 rounded-2xl mb-6"
+            onPress={() => {
+              // Mark as completed and award XP
+              Alert.alert(
+                "Story Completed! 🎉",
+                `You earned ${lecture.xpReward} XP for listening to this story!`,
+                [
+                  {
+                    text: "Continue Learning",
+                    onPress: () => router.back(),
+                  },
+                ]
+              );
+            }}
+            style={{
+              shadowColor: '#015055',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.2,
+              shadowRadius: 12,
+              elevation: 8,
+            }}
           >
-            <Text className="text-white text-center text-lg font-semibold">
-              {markCompletedMutation.isPending ? 'Marking Complete...' : 'Mark as Completed'}
+            <Text
+              className="text-white text-center text-lg"
+              style={{ fontFamily: "Urbanist_700Bold" }}
+            >
+              Mark as Completed
             </Text>
           </TouchableOpacity>
-        )}
-
-        {hasCompleted && (
-          <View className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-            <Text className="text-green-800 text-center font-semibold">
-              ✅ Lecture Completed!
-            </Text>
-          </View>
-        )}
-
-        <View className="flex-row justify-between items-center">
-          <Text className="text-sm text-gray-500">
-            Islamic Story
-          </Text>
-          <Text className="text-sm text-green-600 font-medium">
-            Reward: +{lecture.xpReward} XP
-          </Text>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }

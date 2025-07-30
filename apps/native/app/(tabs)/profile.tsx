@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { router } from "expo-router";
-import { trpc } from "../../utils/trpc";
-import { SyncStatus } from "../../components/sync-status";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { trpc } from "../../lib/trpc";
 
 export default function ProfileScreen() {
   const { data: stats, isLoading: statsLoading } =
@@ -28,13 +28,12 @@ export default function ProfileScreen() {
   };
 
   return (
-    <ScrollView
-      className="flex-1 bg-deen-secondary"
-      contentContainerStyle={{ paddingBottom: 120 }}
-    >
-      <SyncStatus />
-
-      <View className="p-6">
+    <SafeAreaView className="flex-1 bg-deen-secondary">
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ paddingBottom: 120 }}
+      >
+        <View className="p-6">
         {/* Header */}
         <View className="flex-row items-center justify-between mb-6">
           <Text
@@ -230,7 +229,8 @@ export default function ProfileScreen() {
             </View>
           </View>
         </View>
-      </View>
-    </ScrollView>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }

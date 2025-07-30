@@ -1,26 +1,38 @@
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { useState } from 'react';
-import { Ionicons } from '@expo/vector-icons';
-import { trpc } from '../../utils/trpc';
+import { trpc } from '../../lib/trpc';
+import { Award, Play, BookOpen } from 'lucide-react-native';
 
-export default function CategoryDetailScreen() {
+export default function CategoryScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [activeTab, setActiveTab] = useState<'quizzes' | 'lectures'>('quizzes');
 
-  const { data: category } = trpc.categories.getById.useQuery({ id: id! });
-  const { data: quizzes } = trpc.quizzes.getByCategory.useQuery({ categoryId: id! });
-  const { data: lectures } = trpc.lectures.getByCategory.useQuery({ categoryId: id! });
+  const { data: category, isLoading: categoryLoading } = trpc.categories.getById.useQuery({ id: id! });
+  const { data: categoryQuizzes, isLoading: quizzesLoading } = trpc.quizzes.getByCategory.useQuery({ categoryId: id! });
+
+  if (categoryLoading || quizzesLoading) {
+    return (
+      <View className="flex-1 justify-center items-center bg-deen-secondary">
+        <Text className="text-lg" style={{ fontFamily: 'Urbanist_500Medium' }}>
+          Loading category...
+        </Text>
+      </View>
+    );
+  }
 
   if (!category) {
     return (
       <View className="flex-1 justify-center items-center bg-deen-secondary">
-        <Text className="text-lg" style={{ fontFamily: 'Urbanist_500Medium' }}>
+        <Text className="text-lg text-red-600" style={{ fontFamily: 'Urbanist_500Medium' }}>
           Category not found
         </Text>
       </View>
     );
   }
+
+  const startCategoryQuiz = () => {
+    // Start quiz with questions from this category only
+    router.push(`/quiz/category-${id}`);
+  };
 
   const getDifficultyColor = (difficulty: number) => {
     switch (difficulty) {
@@ -40,139 +52,158 @@ export default function CategoryDetailScreen() {
     }
   };
 
-  const formatDuration = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    return `${minutes} min`;
-  };
-
   return (
-    <ScrollView className="flex-1 bg-deen-secondary">
-      <View className="p-6">
-        {/* Header */}
-        <View className="flex-row items-center mb-6">
-          <TouchableOpacity onPress={() => router.back()} className="mr-4">
-            <Ionicons name="arrow-back" size={24} color="#015055" />
-          </TouchableOpacity>
-          <View className="flex-1">
-            <Text className="text-4xl mb-2">{category.icon}</Text>
-            <Text className="text-3xl text-deen-dark" style={{ fontFamily: 'SpaceGrotesk_700Bold' }}>
+    <View className="flex-1 bg-deen-secondary">
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 120 }}>
+        <View className="p-6">
+          {/* Category Header */}
+          <View className="bg-white rounded-3xl p-8 mb-8 items-center shadow-sm">
+            <Text className="text-6xl mb-6">{category.icon}</Text>
+            <Text
+              className="text-3xl text-deen-dark mb-4 text-center"
+              style={{ fontFamily: 'SpaceGrotesk_700Bold' }}
+            >
               {category.name}
             </Text>
-            <Text className="text-gray-600" style={{ fontFamily: 'Urbanist_400Regular' }}>
+            <Text
+              className="text-gray-600 text-center mb-8 leading-6"
+              style={{ fontFamily: 'Urbanist_400Regular' }}
+            >
               {category.description}
             </Text>
-          </View>
-        </View>
 
-        {/* Tab Navigation */}
-        <View className="flex-row bg-white rounded-2xl p-1 mb-6">
-          <TouchableOpacity
-            className={`flex-1 py-3 rounded-xl ${
-              activeTab === 'quizzes' ? 'bg-deen-primary' : ''
-            }`}
-            onPress={() => setActiveTab('quizzes')}
-          >
-            <Text
-              className={`text-center ${
-                activeTab === 'quizzes' ? 'text-white' : 'text-deen-dark'
-              }`}
-              style={{ fontFamily: 'Urbanist_600SemiBold' }}
-            >
-              Quizzes ({quizzes?.length || 0})
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            className={`flex-1 py-3 rounded-xl ${
-              activeTab === 'lectures' ? 'bg-deen-primary' : ''
-            }`}
-            onPress={() => setActiveTab('lectures')}
-          >
-            <Text
-              className={`text-center ${
-                activeTab === 'lectures' ? 'text-white' : 'text-deen-dark'
-              }`}
-              style={{ fontFamily: 'Urbanist_600SemiBold' }}
-            >
-              Lectures ({lectures?.length || 0})
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Content */}
-        {activeTab === 'quizzes' && (
-          <View className="space-y-4">
-            {quizzes?.map((quiz) => (
-              <TouchableOpacity
-                key={quiz.id}
-                className="bg-white rounded-2xl p-6 shadow-sm"
-                onPress={() => router.push(`/quiz/${quiz.id}`)}
-              >
-                <View className="flex-row justify-between items-start mb-3">
-                  <Text className="text-xl text-deen-dark flex-1" style={{ fontFamily: 'SpaceGrotesk_600SemiBold' }}>
-                    {quiz.title}
-                  </Text>
-                  <View className={`px-3 py-1 rounded-full ${getDifficultyColor(quiz.difficulty)}`}>
-                    <Text className="text-xs" style={{ fontFamily: 'Urbanist_500Medium' }}>
-                      {getDifficultyText(quiz.difficulty)}
-                    </Text>
-                  </View>
-                </View>
-
-                <Text className="text-gray-600 mb-4" style={{ fontFamily: 'Urbanist_400Regular' }}>
-                  {quiz.question}
+            <View className="flex-row items-center justify-between w-full">
+              <View className="items-center">
+                <Text
+                  className="text-2xl text-deen-primary"
+                  style={{ fontFamily: 'SpaceGrotesk_700Bold' }}
+                >
+                  {categoryQuizzes?.length || 0}
                 </Text>
+                <Text
+                  className="text-gray-600 text-sm"
+                  style={{ fontFamily: 'Urbanist_400Regular' }}
+                >
+                  Questions
+                </Text>
+              </View>
 
-                <View className="flex-row justify-between items-center">
-                  <Text className="text-sm text-gray-500" style={{ fontFamily: 'Urbanist_400Regular' }}>
-                    Islamic Quiz
-                  </Text>
-                  <Text className="text-sm text-deen-accent" style={{ fontFamily: 'Urbanist_600SemiBold' }}>
-                    +{quiz.xpReward} XP
-                  </Text>
-                </View>
+              <TouchableOpacity
+                className="bg-deen-primary px-8 py-4 rounded-2xl flex-row items-center"
+                onPress={startCategoryQuiz}
+                style={{
+                  shadowColor: '#015055',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.2,
+                  shadowRadius: 12,
+                  elevation: 8,
+                }}
+              >
+                <Play size={20} color="white" fill="white" />
+                <Text
+                  className="text-white ml-2"
+                  style={{ fontFamily: 'Urbanist_700Bold' }}
+                >
+                  Start Quiz
+                </Text>
               </TouchableOpacity>
-            ))}
-          </View>
-        )}
 
-        {activeTab === 'lectures' && (
-          <View className="space-y-4">
-            {lectures?.map((lecture) => (
-              <TouchableOpacity
-                key={lecture.id}
-                className="bg-white rounded-2xl p-6 shadow-sm"
-                onPress={() => router.push(`/lecture/${lecture.id}`)}
-              >
-                <Text className="text-xl text-deen-dark mb-2" style={{ fontFamily: 'SpaceGrotesk_600SemiBold' }}>
-                  {lecture.title}
+              <View className="items-center">
+                <Text
+                  className="text-2xl text-deen-accent"
+                  style={{ fontFamily: 'SpaceGrotesk_700Bold' }}
+                >
+                  {categoryQuizzes?.reduce((sum, q) => sum + (q.xpReward || 0), 0) || 0}
                 </Text>
+                <Text
+                  className="text-gray-600 text-sm"
+                  style={{ fontFamily: 'Urbanist_400Regular' }}
+                >
+                  Total XP
+                </Text>
+              </View>
+            </View>
+          </View>
 
-                {lecture.description && (
-                  <Text className="text-gray-600 mb-4" style={{ fontFamily: 'Urbanist_400Regular' }}>
-                    {lecture.description}
-                  </Text>
-                )}
+          {/* Questions Preview */}
+          <View className="mb-8">
+            <Text
+              className="text-xl text-deen-dark mb-6"
+              style={{ fontFamily: 'SpaceGrotesk_600SemiBold' }}
+            >
+              📚 Questions in this category
+            </Text>
 
-                <View className="flex-row justify-between items-center">
-                  <View className="flex-row items-center">
-                    <Text className="text-sm text-gray-500 mr-4" style={{ fontFamily: 'Urbanist_400Regular' }}>
-                      🎧 Audio Story
+            <View className="space-y-5">
+              {categoryQuizzes?.slice(0, 5).map((quiz, index) => (
+                <View
+                  key={quiz.id}
+                  className="bg-white rounded-2xl p-6 mb-5 shadow-sm"
+                >
+                  <View className="flex-row justify-between items-start mb-4">
+                    <Text
+                      className="text-lg text-deen-dark flex-1 mr-4"
+                      style={{ fontFamily: 'SpaceGrotesk_600SemiBold' }}
+                    >
+                      {quiz.title}
                     </Text>
-                    {lecture.duration && (
-                      <Text className="text-sm text-gray-500" style={{ fontFamily: 'Urbanist_400Regular' }}>
-                        🕐 {formatDuration(lecture.duration)}
+                    <View className={`px-3 py-1 rounded-full ${getDifficultyColor(quiz.difficulty || 1)}`}>
+                      <Text
+                        className="text-xs"
+                        style={{ fontFamily: 'Urbanist_500Medium' }}
+                      >
+                        {getDifficultyText(quiz.difficulty || 1)}
                       </Text>
-                    )}
+                    </View>
                   </View>
-                  <Text className="text-sm text-deen-accent" style={{ fontFamily: 'Urbanist_600SemiBold' }}>
-                    +{lecture.xpReward} XP
+
+                  <Text
+                    className="text-gray-600 mb-4 leading-6"
+                    style={{ fontFamily: 'Urbanist_400Regular' }}
+                  >
+                    {quiz.question}
+                  </Text>
+
+                  <View className="flex-row items-center justify-between">
+                    <Text
+                      className="text-sm text-gray-500"
+                      style={{ fontFamily: 'Urbanist_400Regular' }}
+                    >
+                      Question {index + 1}
+                    </Text>
+                    <View className="flex-row items-center">
+                      <Award size={14} color="#10b981" />
+                      <Text
+                        className="text-deen-accent ml-1 text-sm"
+                        style={{ fontFamily: 'Urbanist_600SemiBold' }}
+                      >
+                        +{quiz.xpReward} XP
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              ))}
+
+              {(categoryQuizzes?.length || 0) > 5 && (
+                <View className="bg-gray-100 rounded-2xl p-6 items-center mt-2">
+                  <Text
+                    className="text-gray-600 text-lg"
+                    style={{ fontFamily: 'Urbanist_500Medium' }}
+                  >
+                    +{(categoryQuizzes?.length || 0) - 5} more questions
+                  </Text>
+                  <Text
+                    className="text-gray-500 text-sm mt-2"
+                    style={{ fontFamily: 'Urbanist_400Regular' }}
+                  >
+                    Start the quiz to see all questions
                   </Text>
                 </View>
-              </TouchableOpacity>
-            ))}
+              )}
+            </View>
           </View>
-        )}
-      </View>
-    </ScrollView>
+        </View>
+      </ScrollView>
+    </View>
   );
 }

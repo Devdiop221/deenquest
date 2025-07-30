@@ -1,7 +1,8 @@
 import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { router } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Heart } from 'lucide-react-native';
-import { trpc } from '../../utils/trpc';
+import { trpc } from '../../lib/trpc';
 
 export default function FavoritesScreen() {
   const { data: favorites, isLoading, refetch } = trpc.favorites.getAll.useQuery();
@@ -57,8 +58,9 @@ export default function FavoritesScreen() {
   }
 
   return (
-    <ScrollView className="flex-1 bg-deen-secondary" contentContainerStyle={{ paddingBottom: 120 }}>
-      <View className="p-6">
+    <SafeAreaView className="flex-1 bg-deen-secondary">
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 120 }}>
+        <View className="p-6">
         <View className="flex-row items-center justify-between mb-8">
           <Text className="text-3xl text-deen-dark" style={{ fontFamily: 'SpaceGrotesk_700Bold' }}>
             Your Favorites
@@ -79,7 +81,7 @@ export default function FavoritesScreen() {
               {favorites.quizzes.map((quiz) => (
                 <View
                   key={quiz.id}
-                  className="bg-white rounded-2xl p-4"
+                  className="bg-white rounded-2xl p-4 mb-3"
                   style={{
                     shadowColor: '#000',
                     shadowOffset: { width: 0, height: 2 },
@@ -125,7 +127,7 @@ export default function FavoritesScreen() {
               {favorites.lectures.map((lecture) => (
                 <View
                   key={lecture.id}
-                  className="bg-white rounded-2xl p-4"
+                  className="bg-white rounded-2xl p-4 mb-3"
                   style={{
                     shadowColor: '#000',
                     shadowOffset: { width: 0, height: 2 },
@@ -170,7 +172,8 @@ export default function FavoritesScreen() {
             </View>
           </View>
         )}
-      </View>
-    </ScrollView>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }

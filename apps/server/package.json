@@ -12,7 +12,11 @@
     "db:studio": "drizzle-kit studio",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:seed": "bun run src/db/seed.ts"
+    "db:seed": "bun run src/db/seed.ts",
+    "db:add-questions": "bun run src/db/add-more-questions.ts",
+    "db:full-quiz": "bun run src/db/create-full-quiz-set.ts",
+    "db:summary": "bun run src/db/quiz-summary.ts",
+    "db:clean": "bun run src/db/clean-duplicates.ts"
   },
   "dependencies": {
     "dotenv": "^16.4.7",

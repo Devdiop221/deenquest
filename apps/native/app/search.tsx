@@ -1,259 +1,231 @@
-import { View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, TextInput, ScrollView, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
-import { useState, useMemo } from 'react';
-import { Ionicons } from '@expo/vector-icons';
-import { trpc } from '../utils/trpc';
+import { useState, useEffect } from 'react';
+import { Search, X, BookOpen, HelpCircle } from 'lucide-react-native';
+import { trpc } from '../lib/trpc';
 
 export default function SearchScreen() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState<'all' | 'quizzes' | 'lectures'>('all');
+  const [searchResults, setSearchResults] = useState<{
+    quizzes: any[];
+    lectures: any[];
+  }>({ quizzes: [], lectures: [] });
 
-  const { data: quizzes } = trpc.quizzes.getAll.useQuery();
-  const { data: lectures } = trpc.lectures.getAll.useQuery();
+  const { data: allQuizzes } = trpc.quizzes.getAll.useQuery();
+  const { data: allLectures } = trpc.lectures.getAll.useQuery();
 
-  const filteredResults = useMemo(() => {
-    if (!searchQuery.trim()) return { quizzes: [], lectures: [] };
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setSearchResults({ quizzes: [], lectures: [] });
+      return;
+    }
 
     const query = searchQuery.toLowerCase();
 
-    const filteredQuizzes = quizzes?.filter(quiz =>
+    const filteredQuizzes = allQuizzes?.filter(quiz =>
       quiz.title.toLowerCase().includes(query) ||
       quiz.question.toLowerCase().includes(query) ||
       quiz.category?.name.toLowerCase().includes(query)
     ) || [];
 
-    const filteredLectures = lectures?.filter(lecture =>
+    const filteredLectures = allLectures?.filter(lecture =>
       lecture.title.toLowerCase().includes(query) ||
       lecture.description?.toLowerCase().includes(query) ||
       lecture.category?.name.toLowerCase().includes(query)
     ) || [];
 
-    return {
-      quizzes: activeFilter === 'lectures' ? [] : filteredQuizzes,
-      lectures: activeFilter === 'quizzes' ? [] : filteredLectures,
-    };
-  }, [searchQuery, quizzes, lectures, activeFilter]);
+    setSearchResults({
+      quizzes: filteredQuizzes.slice(0, 10),
+      lectures: filteredLectures.slice(0, 10),
+    });
+  }, [searchQuery, allQuizzes, allLectures]);
 
-  const getDifficultyColor = (difficulty: number) => {
-    switch (difficulty) {
-      case 1: return 'bg-green-100 text-green-800';
-      case 2: return 'bg-yellow-100 text-yellow-800';
-      case 3: return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+  const clearSearch = () => {
+    setSearchQuery('');
+    setSearchResults({ quizzes: [], lectures: [] });
   };
-
-  const getDifficultyText = (difficulty: number) => {
-    switch (difficulty) {
-      case 1: return 'Easy';
-      case 2: return 'Medium';
-      case 3: return 'Hard';
-      default: return 'Unknown';
-    }
-  };
-
-  const formatDuration = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    return `${minutes} min`;
-  };
-
-  const totalResults = filteredResults.quizzes.length + filteredResults.lectures.length;
 
   return (
     <View className="flex-1 bg-deen-secondary">
-      <View className="p-6">
-        {/* Header */}
+      <View className="p-6 pt-12">
+        {/* Search Header */}
         <View className="flex-row items-center mb-6">
-          <TouchableOpacity onPress={() => router.back()} className="mr-4">
-            <Ionicons name="arrow-back" size={24} color="#015055" />
+          <TouchableOpacity
+            onPress={() => router.back()}
+            className="mr-4 p-2"
+          >
+            <X size={24} color="#015055" />
           </TouchableOpacity>
-          <Text className="text-3xl text-deen-dark" style={{ fontFamily: 'SpaceGrotesk_700Bold' }}>
-            Search
+          <Text
+            className="text-xl text-deen-dark"
+            style={{ fontFamily: 'SpaceGrotesk_700Bold' }}
+          >
+            Search DeenQuest
           </Text>
         </View>
-
-        {/* Search Bar */}
-        <View className="bg-white rounded-2xl p-4 mb-6 flex-row items-center">
-          <Ionicons name="search" size={20} color="#6b7280" />
+     {/* Search Input */}
+        <View className="bg-white rounded-2xl p-4 flex-row items-center mb-6 shadow-sm">
+          <Search size={20} color="#6b7280" />
           <TextInput
             className="flex-1 ml-3 text-lg"
-            placeholder="Search quizzes and lectures..."
+            placeholder="Search quizzes, stories, topics..."
+            placeholderTextColor="#9ca3af"
             value={searchQuery}
             onChangeText={setSearchQuery}
             style={{ fontFamily: 'Urbanist_400Regular' }}
+            autoFocus
           />
           {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={20} color="#6b7280" />
+            <TouchableOpacity onPress={clearSearch} className="p-1">
+              <X size={20} color="#6b7280" />
             </TouchableOpacity>
           )}
         </View>
 
-        {/* Filter Tabs */}
-        <View className="flex-row bg-white rounded-2xl p-1 mb-6">
-          <TouchableOpacity
-            className={`flex-1 py-3 rounded-xl ${
-              activeFilter === 'all' ? 'bg-deen-primary' : ''
-            }`}
-            onPress={() => setActiveFilter('all')}
-          >
-            <Text
-              className={`text-center ${
-                activeFilter === 'all' ? 'text-white' : 'text-deen-dark'
-              }`}
-              style={{ fontFamily: 'Urbanist_600SemiBold' }}
-            >
-              All
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            className={`flex-1 py-3 rounded-xl ${
-              activeFilter === 'quizzes' ? 'bg-deen-primary' : ''
-            }`}
-            onPress={() => setActiveFilter('quizzes')}
-          >
-            <Text
-              className={`text-center ${
-                activeFilter === 'quizzes' ? 'text-white' : 'text-deen-dark'
-              }`}
-              style={{ fontFamily: 'Urbanist_600SemiBold' }}
-            >
-              Quizzes
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            className={`flex-1 py-3 rounded-xl ${
-              activeFilter === 'lectures' ? 'bg-deen-primary' : ''
-            }`}
-            onPress={() => setActiveFilter('lectures')}
-          >
-            <Text
-              className={`text-center ${
-                activeFilter === 'lectures' ? 'text-white' : 'text-deen-dark'
-              }`}
-              style={{ fontFamily: 'Urbanist_600SemiBold' }}
-            >
-              Lectures
-            </Text>
-          </TouchableOpacity>
-        </View>
+        {/* Search Results */}
+        <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+          {searchQuery.trim() === '' ? (
+            <View className="items-center justify-center py-20">
+              <Search size={64} color="#9ca3af" />
+              <Text
+                className="text-gray-500 text-center mt-4"
+                style={{ fontFamily: 'Urbanist_400Regular' }}
+              >
+                Start typing to search for quizzes and stories
+              </Text>
+            </View>
+          ) : (
+            <View>
+              {/* Quiz Results */}
+              {searchResults.quizzes.length > 0 && (
+                <View className="mb-6">
+                  <Text
+                    className="text-lg text-deen-dark mb-4"
+                    style={{ fontFamily: 'SpaceGrotesk_600SemiBold' }}
+                  >
+                    🧠 Quizzes ({searchResults.quizzes.length})
+                  </Text>
+                  {searchResults.quizzes.map((quiz) => (
+                    <TouchableOpacity
+                      key={quiz.id}
+                      className="bg-white rounded-2xl p-4 mb-3 shadow-sm"
+                      onPress={() => router.push(`/quiz/${quiz.id}`)}
+                    >
+                      <View className="flex-row items-start">
+                        <View className="bg-deen-secondary p-2 rounded-xl mr-3">
+                          <HelpCircle size={20} color="#015055" />
+                        </View>
+                        <View className="flex-1">
+                          <Text
+                            className="text-deen-dark mb-1"
+                            style={{ fontFamily: 'SpaceGrotesk_600SemiBold' }}
+                          >
+                            {quiz.title}
+                          </Text>
+                          <Text
+                            className="text-gray-600 text-sm mb-2"
+                            style={{ fontFamily: 'Urbanist_400Regular' }}
+                          >
+                            {quiz.question}
+                          </Text>
+                          <View className="flex-row items-center">
+                            <Text
+                              className="text-xs text-gray-500 mr-3"
+                              style={{ fontFamily: 'Urbanist_400Regular' }}
+                            >
+                              {quiz.category?.icon} {quiz.category?.name}
+                            </Text>
+                            <Text
+                              className="text-xs text-deen-accent"
+                              style={{ fontFamily: 'Urbanist_600SemiBold' }}
+                            >
+                              +{quiz.xpReward} XP
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
 
-        {/* Results */}
-        {searchQuery.trim() && (
-          <Text className="text-gray-600 mb-4" style={{ fontFamily: 'Urbanist_400Regular' }}>
-            {totalResults} result{totalResults !== 1 ? 's' : ''} found
-          </Text>
-        )}
+              {/* Lecture Results */}
+              {searchResults.lectures.length > 0 && (
+                <View className="mb-6">
+                  <Text
+                    className="text-lg text-deen-dark mb-4"
+                    style={{ fontFamily: 'SpaceGrotesk_600SemiBold' }}
+                  >
+                    📚 Stories ({searchResults.lectures.length})
+                  </Text>
+                  {searchResults.lectures.map((lecture) => (
+                    <TouchableOpacity
+                      key={lecture.id}
+                      className="bg-white rounded-2xl p-4 mb-3 shadow-sm"
+                      onPress={() => router.push(`/lecture/${lecture.id}`)}
+                    >
+                      <View className="flex-row items-start">
+                        <View className="bg-deen-secondary p-2 rounded-xl mr-3">
+                          <BookOpen size={20} color="#015055" />
+                        </View>
+                        <View className="flex-1">
+                          <Text
+                            className="text-deen-dark mb-1"
+                            style={{ fontFamily: 'SpaceGrotesk_600SemiBold' }}
+                          >
+                            {lecture.title}
+                          </Text>
+                          {lecture.description && (
+                            <Text
+                              className="text-gray-600 text-sm mb-2"
+                              style={{ fontFamily: 'Urbanist_400Regular' }}
+                            >
+                              {lecture.description}
+                            </Text>
+                          )}
+                          <View className="flex-row items-center">
+                            <Text
+                              className="text-xs text-gray-500 mr-3"
+                              style={{ fontFamily: 'Urbanist_400Regular' }}
+                            >
+                              {lecture.category?.icon} {lecture.category?.name}
+                            </Text>
+                            <Text
+                              className="text-xs text-deen-accent"
+                              style={{ fontFamily: 'Urbanist_600SemiBold' }}
+                            >
+                              +{lecture.xpReward} XP
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+
+              {/* No Results */}
+              {searchResults.quizzes.length === 0 && searchResults.lectures.length === 0 && (
+                <View className="items-center justify-center py-20">
+                  <Text className="text-6xl mb-4">🔍</Text>
+                  <Text
+                    className="text-gray-500 text-center"
+                    style={{ fontFamily: 'Urbanist_500Medium' }}
+                  >
+                    No results found for "{searchQuery}"
+                  </Text>
+                  <Text
+                    className="text-gray-400 text-center mt-2"
+                    style={{ fontFamily: 'Urbanist_400Regular' }}
+                  >
+                    Try searching for different keywords
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
+        </ScrollView>
       </View>
-
-      <ScrollView className="flex-1 px-6">
-        {searchQuery.trim() === '' ? (
-          <View className="items-center justify-center py-20">
-            <Text className="text-6xl mb-4">🔍</Text>
-            <Text className="text-xl text-deen-dark mb-2" style={{ fontFamily: 'SpaceGrotesk_600SemiBold' }}>
-              Search DeenQuest
-            </Text>
-            <Text className="text-gray-600 text-center" style={{ fontFamily: 'Urbanist_400Regular' }}>
-              Find quizzes and lectures on Islamic topics
-            </Text>
-          </View>
-        ) : totalResults === 0 ? (
-          <View className="items-center justify-center py-20">
-            <Text className="text-6xl mb-4">😔</Text>
-            <Text className="text-xl text-deen-dark mb-2" style={{ fontFamily: 'SpaceGrotesk_600SemiBold' }}>
-              No results found
-            </Text>
-            <Text className="text-gray-600 text-center" style={{ fontFamily: 'Urbanist_400Regular' }}>
-              Try different keywords or browse categories
-            </Text>
-          </View>
-        ) : (
-          <View className="space-y-4 pb-6">
-            {/* Quiz Results */}
-            {filteredResults.quizzes.map((quiz) => (
-              <TouchableOpacity
-                key={`quiz-${quiz.id}`}
-                className="bg-white rounded-2xl p-6 shadow-sm"
-                onPress={() => router.push(`/quiz/${quiz.id}`)}
-              >
-                <View className="flex-row items-start justify-between mb-3">
-                  <View className="flex-1">
-                    <View className="flex-row items-center mb-2">
-                      <Ionicons name="help-circle" size={16} color="#10b981" />
-                      <Text className="text-deen-accent ml-1 text-sm" style={{ fontFamily: 'Urbanist_500Medium' }}>
-                        Quiz
-                      </Text>
-                    </View>
-                    <Text className="text-xl text-deen-dark" style={{ fontFamily: 'SpaceGrotesk_600SemiBold' }}>
-                      {quiz.title}
-                    </Text>
-                  </View>
-                  <View className={`px-3 py-1 rounded-full ${getDifficultyColor(quiz.difficulty)}`}>
-                    <Text className="text-xs" style={{ fontFamily: 'Urbanist_500Medium' }}>
-                      {getDifficultyText(quiz.difficulty)}
-                    </Text>
-                  </View>
-                </View>
-
-                <Text className="text-gray-600 mb-4" style={{ fontFamily: 'Urbanist_400Regular' }}>
-                  {quiz.question}
-                </Text>
-
-                <View className="flex-row justify-between items-center">
-                  <Text className="text-sm text-gray-500" style={{ fontFamily: 'Urbanist_400Regular' }}>
-                    {quiz.category?.icon} {quiz.category?.name}
-                  </Text>
-                  <Text className="text-sm text-deen-accent" style={{ fontFamily: 'Urbanist_600SemiBold' }}>
-                    +{quiz.xpReward} XP
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-
-            {/* Lecture Results */}
-            {filteredResults.lectures.map((lecture) => (
-              <TouchableOpacity
-                key={`lecture-${lecture.id}`}
-                className="bg-white rounded-2xl p-6 shadow-sm"
-                onPress={() => router.push(`/lecture/${lecture.id}`)}
-              >
-                <View className="flex-row items-center mb-2">
-                  <Ionicons name="play-circle" size={16} color="#3b82f6" />
-                  <Text className="text-blue-500 ml-1 text-sm" style={{ fontFamily: 'Urbanist_500Medium' }}>
-                    Lecture
-                  </Text>
-                </View>
-
-                <Text className="text-xl text-deen-dark mb-2" style={{ fontFamily: 'SpaceGrotesk_600SemiBold' }}>
-                  {lecture.title}
-                </Text>
-
-                {lecture.description && (
-                  <Text className="text-gray-600 mb-4" style={{ fontFamily: 'Urbanist_400Regular' }}>
-                    {lecture.description}
-                  </Text>
-                )}
-
-                <View className="flex-row justify-between items-center">
-                  <View className="flex-row items-center">
-                    <Text className="text-sm text-gray-500 mr-4" style={{ fontFamily: 'Urbanist_400Regular' }}>
-                      {lecture.category?.icon} {lecture.category?.name}
-                    </Text>
-                    {lecture.duration && (
-                      <Text className="text-sm text-gray-500" style={{ fontFamily: 'Urbanist_400Regular' }}>
-                        🕐 {formatDuration(lecture.duration)}
-                      </Text>
-                    )}
-                  </View>
-                  <Text className="text-sm text-deen-accent" style={{ fontFamily: 'Urbanist_600SemiBold' }}>
-                    +{lecture.xpReward} XP
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-      </ScrollView>
     </View>
   );
 }
