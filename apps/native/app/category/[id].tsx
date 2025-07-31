@@ -1,10 +1,19 @@
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
+import { useLocalSearchParams, router, useNavigation } from 'expo-router';
+import { useLayoutEffect } from 'react';
 import { trpc } from '../../lib/trpc';
 import { Award, Play, BookOpen } from 'lucide-react-native';
 
 export default function CategoryScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const navigation = useNavigation();
+
+  // Force hide header
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerShown: false,
+    });
+  }, [navigation]);
 
   const { data: category, isLoading: categoryLoading } = trpc.categories.getById.useQuery({ id: id! });
   const { data: categoryQuizzes, isLoading: quizzesLoading } = trpc.quizzes.getByCategory.useQuery({ categoryId: id! });

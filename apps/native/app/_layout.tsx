@@ -89,44 +89,18 @@ export default function RootLayout() {
             <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
               <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
               <GestureHandlerRootView style={{ flex: 1 }}>
-                <Stack>
-                  <Stack.Screen
-                    name="(tabs)"
-                    options={{ headerShown: false }}
-                  />
-                  <Stack.Screen
-                    name="auth/sign-in"
-                    options={{ headerShown: false }}
-                  />
-                  <Stack.Screen
-                    name="auth/sign-up"
-                    options={{ headerShown: false }}
-                  />
-                  <Stack.Screen
-                    name="category/[id]"
-                    options={{ headerShown: false }}
-                  />
-                  <Stack.Screen
-                    name="quiz/[id]"
-                    options={{ headerShown: true }}
-                  />
-                  <Stack.Screen
-                    name="lecture/[id]"
-                    options={{ headerShown: false }}
-                  />
-                  <Stack.Screen
-                    name="quiz-progress"
-                    options={{ headerShown: false }}
-                  />
-                  <Stack.Screen name="stats" options={{ headerShown: false }} />
-                  <Stack.Screen
-                    name="search"
-                    options={{ headerShown: false }}
-                  />
-                  <Stack.Screen
-                    name="modal"
-                    options={{ title: "Modal", presentation: "modal" }}
-                  />
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen name="auth/sign-in" />
+                  <Stack.Screen name="auth/sign-up" />
+                  <Stack.Screen name="category/[id]" />
+                  <Stack.Screen name="quiz/[id]" />
+                  <Stack.Screen name="quiz/random" />
+                  <Stack.Screen name="lecture/[id]" />
+                  <Stack.Screen name="quiz-progress" />
+                  <Stack.Screen name="stats" />
+                  <Stack.Screen name="search" />
+                  <Stack.Screen name="modal" />
                 </Stack>
               </GestureHandlerRootView>
             </ThemeProvider>

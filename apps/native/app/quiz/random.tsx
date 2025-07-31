@@ -1,10 +1,18 @@
 import { View, Text, TouchableOpacity, ScrollView, Alert } from "react-native";
-import { router } from "expo-router";
-import { useState, useEffect } from "react";
+import { router, useNavigation } from "expo-router";
+import { useState, useEffect, useLayoutEffect } from "react";
 import { Heart, Award, Shuffle } from 'lucide-react-native';
 import { trpc } from "../../lib/trpc";
 
 export default function RandomQuizScreen() {
+  const navigation = useNavigation();
+
+  // Force hide header
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerShown: false,
+    });
+  }, [navigation]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);

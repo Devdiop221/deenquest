@@ -1,11 +1,19 @@
 import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
-import { useState, useEffect } from 'react';
+import { useLocalSearchParams, router, useNavigation } from 'expo-router';
+import { useState, useEffect, useLayoutEffect } from 'react';
 import { Play, Pause, SkipBack, SkipForward, Heart, BookOpen } from 'lucide-react-native';
 import { trpc } from '../../lib/trpc';
 
 export default function LectureScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const navigation = useNavigation();
+
+  // Force hide header
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerShown: false,
+    });
+  }, [navigation]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);

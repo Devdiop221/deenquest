@@ -1,11 +1,20 @@
 import { View, Text, TouchableOpacity, ScrollView, Alert } from "react-native";
 import { useLocalSearchParams, router, useNavigation } from "expo-router";
 import { useState, useEffect, useLayoutEffect } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Heart, ArrowLeft, Award } from "lucide-react-native";
 import { trpc } from "../../lib/trpc";
 
 export default function QuizDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const navigation = useNavigation();
+
+  // Force hide header
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerShown: false,
+    });
+  }, [navigation]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
@@ -123,7 +132,49 @@ export default function QuizDetailScreen() {
   const isCorrect = selectedAnswer === currentQuiz?.correctAnswerIndex;
 
   return (
-    <View className="flex-1 bg-deen-secondary">
+    <SafeAreaView className="flex-1 bg-deen-secondary">
+      {/* Custom Header */}
+      <View className="px-6 py-4 shadow-sm">
+        <View className="flex-row items-center justify-between">
+          <TouchableOpacity
+            onPress={() => router.back()}
+            className="flex-row items-center bg-deen-primary px-3 py-2 rounded-xl px-3 py-2 rounded-xl"
+          >
+            <ArrowLeft size={20} color="#FFFFFF" strokeWidth={2.5} />
+            <Text
+              className="text-white ml-2"
+              style={{ fontFamily: "Urbanist_600SemiBold" }}
+            >
+              Back
+            </Text>
+          </TouchableOpacity>
+
+          <View className="flex-1 items-center">
+            <Text
+              className="text-lg text-deen-dark"
+              style={{ fontFamily: "SpaceGrotesk_700Bold" }}
+            >
+              Quiz Challenge
+            </Text>
+            <Text
+              className="text-sm text-gray-500"
+              style={{ fontFamily: "Urbanist_400Regular" }}
+            >
+              Question {currentQuestionIndex + 1} of {totalQuestions}
+            </Text>
+          </View>
+
+          <View className="bg-deen-primary px-3 py-2 rounded-xl">
+            <Text
+              className="text-white text-sm"
+              style={{ fontFamily: "Urbanist_600SemiBold" }}
+            >
+              {score} XP
+            </Text>
+          </View>
+        </View>
+      </View>
+
       <ScrollView className="flex-1">
         <View className="p-6">
           {/* Score Card */}
@@ -354,6 +405,6 @@ export default function QuizDetailScreen() {
           </View>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }

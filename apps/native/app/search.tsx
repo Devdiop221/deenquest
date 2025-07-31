@@ -1,10 +1,18 @@
 import { View, Text, TextInput, ScrollView, TouchableOpacity } from 'react-native';
-import { router } from 'expo-router';
-import { useState, useEffect } from 'react';
+import { router, useNavigation } from 'expo-router';
+import { useState, useEffect, useLayoutEffect } from 'react';
 import { Search, X, BookOpen, HelpCircle } from 'lucide-react-native';
 import { trpc } from '../lib/trpc';
 
 export default function SearchScreen() {
+  const navigation = useNavigation();
+
+  // Force hide header
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerShown: false,
+    });
+  }, [navigation]);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<{
     quizzes: any[];
