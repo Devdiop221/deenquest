@@ -39,3 +39,30 @@ export const NAV_THEME = {
     text: COLORS.light,
   },
 };
+
+export const DEEN_COLORS = {
+  light: {
+    primary: '#015055',
+    secondary: '#F8FFFE',
+    accent: '#10b981',
+    dark: '#1f2937',
+    background: '#ffffff',
+    surface: '#f9fafb',
+    text: '#1f2937',
+    textSecondary: '#6b7280',
+    border: '#e5e7eb',
+    cardBackground: '#ffffff',
+  },
+  dark: {
+    primary: '#20b2aa',
+    secondary: '#1a1a1a',
+    accent: '#34d399',
+    dark: '#f9fafb',
+    background: '#111827',
+    surface: '#1f2937',
+    text: '#f9fafb',
+    textSecondary: '#d1d5db',
+    border: '#374151',
+    cardBackground: '#1f2937',
+  },
+};

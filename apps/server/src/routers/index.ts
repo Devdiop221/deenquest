@@ -7,6 +7,7 @@ import { quizzesRouter } from "./quizzes";
 import { lecturesRouter } from "./lectures";
 import { favoritesRouter } from "./favorites";
 import { userRouter } from "./user";
+import { badgesRouter } from "./badges";
 
 export const appRouter = router({
   healthCheck: publicProcedure.query(() => {
@@ -23,5 +24,6 @@ export const appRouter = router({
   lectures: lecturesRouter,
   favorites: favoritesRouter,
   user: userRouter,
+  badges: badgesRouter,
 });
 export type AppRouter = typeof appRouter;

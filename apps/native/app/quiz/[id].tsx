@@ -24,6 +24,8 @@ export default function QuizDetailScreen() {
   const [userAnswers, setUserAnswers] = useState<number[]>([]);
 
   const { data: allQuizzes, isLoading } = trpc.quizzes.getAll.useQuery();
+  const updateStatsMutation = trpc.badges.updateStats.useMutation();
+  const checkBadgesMutation = trpc.badges.checkBadges.useMutation();
 
   // Get current quiz from all quizzes
   const currentQuiz = allQuizzes?.[currentQuestionIndex];
@@ -120,9 +122,26 @@ export default function QuizDetailScreen() {
     setShowResult(true);
   };
 
-  const handleNextQuestion = () => {
+  const handleNextQuestion = async () => {
     if (currentQuestionIndex + 1 >= totalQuestions) {
       setQuizCompleted(true);
+
+      // Award XP and update stats
+      const xpGained = correctAnswers * 10; // 10 XP per correct answer
+      try {
+        await updateStatsMutation.mutateAsync({
+          userId: "demo-user", // Using demo user for now
+          xpGained,
+          quizCompleted: true,
+        });
+
+        // Check for new badges
+        await checkBadgesMutation.mutateAsync({
+          userId: "demo-user",
+        });
+      } catch (error) {
+        console.error("Failed to update stats:", error);
+      }
     } else {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     }

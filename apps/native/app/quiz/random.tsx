@@ -22,6 +22,8 @@ export default function RandomQuizScreen() {
   const [shuffledQuizzes, setShuffledQuizzes] = useState<any[]>([]);
 
   const { data: allQuizzes, isLoading } = trpc.quizzes.getAll.useQuery();
+  const updateStatsMutation = trpc.badges.updateStats.useMutation();
+  const checkBadgesMutation = trpc.badges.checkBadges.useMutation();
 
   // Shuffle quizzes when data is loaded
   useEffect(() => {
@@ -203,9 +205,26 @@ export default function RandomQuizScreen() {
     setShowResult(true);
   };
 
-  const handleNextQuestion = () => {
+  const handleNextQuestion = async () => {
     if (currentQuestionIndex + 1 >= totalQuestions) {
       setQuizCompleted(true);
+
+      // Award XP and update stats
+      const xpGained = correctAnswers * 10; // 10 XP per correct answer
+      try {
+        await updateStatsMutation.mutateAsync({
+          userId: 'demo-user', // Using demo user for now
+          xpGained,
+          quizCompleted: true,
+        });
+
+        // Check for new badges
+        await checkBadgesMutation.mutateAsync({
+          userId: 'demo-user',
+        });
+      } catch (error) {
+        console.error('Failed to update stats:', error);
+      }
     } else {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     }

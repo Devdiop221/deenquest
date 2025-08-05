@@ -17,6 +17,7 @@ import { useColorScheme } from "@/lib/use-color-scheme";
 import { Platform } from "react-native";
 import { setAndroidNavigationBar } from "@/lib/android-navigation-bar";
 import { AuthProvider } from "@/lib/auth-context";
+import { ThemeProvider } from "@/lib/theme-context";
 import { useFonts } from "expo-font";
 import {
   SpaceGrotesk_300Light,
@@ -86,7 +87,8 @@ export default function RootLayout() {
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
+            <ThemeProvider>
+              <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
               <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
               <GestureHandlerRootView style={{ flex: 1 }}>
                 <Stack screenOptions={{ headerShown: false }}>
@@ -100,9 +102,11 @@ export default function RootLayout() {
                   <Stack.Screen name="quiz-progress" />
                   <Stack.Screen name="stats" />
                   <Stack.Screen name="search" />
+                  <Stack.Screen name="settings" />
                   <Stack.Screen name="modal" />
                 </Stack>
               </GestureHandlerRootView>
+            </ThemeProvider>
             </ThemeProvider>
           </AuthProvider>
         </QueryClientProvider>

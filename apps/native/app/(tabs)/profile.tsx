@@ -1,7 +1,9 @@
 import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Settings } from "lucide-react-native";
 import { trpc } from "../../lib/trpc";
+import Badge from "../../components/Badge";
 
 export default function ProfileScreen() {
   const { data: stats, isLoading: statsLoading } =
@@ -40,19 +42,27 @@ export default function ProfileScreen() {
             className="text-3xl text-deen-dark"
             style={{ fontFamily: "SpaceGrotesk_700Bold" }}
           >
-            Leaderboard
+            Profile
           </Text>
-          <TouchableOpacity
-            onPress={() => router.push("/stats")}
-            className="bg-deen-primary px-4 py-2 rounded-xl"
-          >
-            <Text
-              className="text-white"
-              style={{ fontFamily: "Urbanist_600SemiBold" }}
+          <View className="flex-row space-x-2">
+            <TouchableOpacity
+              onPress={() => router.push("/settings")}
+              className="bg-gray-100 p-2 rounded-xl mr-2"
             >
-              My Stats
-            </Text>
-          </TouchableOpacity>
+              <Settings size={20} color="#015055" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => router.push("/stats")}
+              className="bg-deen-primary px-4 py-2 rounded-xl"
+            >
+              <Text
+                className="text-white"
+                style={{ fontFamily: "Urbanist_600SemiBold" }}
+              >
+                My Stats
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Toggle Buttons */}
@@ -228,6 +238,39 @@ export default function ProfileScreen() {
               </Text>
             </View>
           </View>
+        </View>
+
+        {/* Badges Section */}
+        <View className="mt-6 bg-white rounded-2xl p-4">
+          <Text
+            className="text-lg text-deen-dark mb-4"
+            style={{ fontFamily: "SpaceGrotesk_600SemiBold" }}
+          >
+            Your Badges
+          </Text>
+          {badges && badges.length > 0 ? (
+            <View className="flex-row flex-wrap justify-between">
+              {badges.slice(0, 6).map((userBadge, index) => (
+                <Badge
+                  key={index}
+                  name={userBadge.badge.name}
+                  description={userBadge.badge.description}
+                  icon={userBadge.badge.icon}
+                  unlocked={true}
+                  size="small"
+                />
+              ))}
+            </View>
+          ) : (
+            <View className="items-center py-8">
+              <Text
+                className="text-gray-500 text-center"
+                style={{ fontFamily: "Urbanist_400Regular" }}
+              >
+                Complete quizzes and listen to stories to earn badges!
+              </Text>
+            </View>
+          )}
         </View>
         </View>
       </ScrollView>

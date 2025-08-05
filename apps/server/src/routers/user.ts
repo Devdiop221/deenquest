@@ -1,5 +1,7 @@
 import { protectedProcedure, router } from "../lib/trpc";
-import { db, userStats, userProgress, userBadges, badges } from "../db";
+import { db } from "../db";
+import { userStats, userBadges, badges } from "../db/schema/badges";
+import { userProgress } from "../db/schema/deenquest";
 import { eq, desc, count } from "drizzle-orm";
 
 export const userRouter = router({
@@ -65,7 +67,7 @@ export const userRouter = router({
     const earnedBadges = await db
       .select({
         id: userBadges.id,
-        earnedAt: userBadges.earnedAt,
+        unlockedAt: userBadges.unlockedAt,
         badge: {
           id: badges.id,
           name: badges.name,
@@ -76,7 +78,7 @@ export const userRouter = router({
       .from(userBadges)
       .leftJoin(badges, eq(userBadges.badgeId, badges.id))
       .where(eq(userBadges.userId, ctx.session.user.id))
-      .orderBy(desc(userBadges.earnedAt));
+      .orderBy(desc(userBadges.unlockedAt));
 
     return earnedBadges;
   }),

@@ -56,82 +56,86 @@ export default function SignUpScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white px-6 justify-center">
+    <View className="flex-1 bg-deen-secondary px-6 justify-center">
       <View className="mb-8">
-        <Text className="text-4xl font-bold text-center text-gray-800 mb-2">
+        <Text className="text-4xl text-center text-deen-dark mb-2" style={{ fontFamily: 'SpaceGrotesk_700Bold' }}>
           Join DeenQuest
         </Text>
-        <Text className="text-lg text-center text-gray-600">
+        <Text className="text-lg text-center text-gray-600" style={{ fontFamily: 'Urbanist_400Regular' }}>
           Create your account to start your Islamic learning journey.
         </Text>
       </View>
 
       <View className="space-y-4 mb-6">
         <View>
-          <Text className="text-gray-700 mb-2 font-medium">Full Name</Text>
+          <Text className="text-deen-dark mb-2" style={{ fontFamily: 'Urbanist_500Medium' }}>Full Name</Text>
           <TextInput
-            className="border border-gray-300 rounded-lg px-4 py-3 text-lg"
+            className="bg-white border border-gray-200 rounded-2xl px-4 py-4 text-lg"
             placeholder="Enter your full name"
             value={name}
             onChangeText={setName}
             autoComplete="name"
+            style={{ fontFamily: 'Urbanist_400Regular' }}
           />
         </View>
 
         <View>
-          <Text className="text-gray-700 mb-2 font-medium">Email</Text>
+          <Text className="text-deen-dark mb-2" style={{ fontFamily: 'Urbanist_500Medium' }}>Email</Text>
           <TextInput
-            className="border border-gray-300 rounded-lg px-4 py-3 text-lg"
+            className="bg-white border border-gray-200 rounded-2xl px-4 py-4 text-lg"
             placeholder="Enter your email"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
             autoCapitalize="none"
             autoComplete="email"
+            style={{ fontFamily: 'Urbanist_400Regular' }}
           />
         </View>
 
         <View>
-          <Text className="text-gray-700 mb-2 font-medium">Password</Text>
+          <Text className="text-deen-dark mb-2" style={{ fontFamily: 'Urbanist_500Medium' }}>Password</Text>
           <TextInput
-            className="border border-gray-300 rounded-lg px-4 py-3 text-lg"
+            className="bg-white border border-gray-200 rounded-2xl px-4 py-4 text-lg"
             placeholder="Enter your password"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
             autoComplete="new-password"
+            style={{ fontFamily: 'Urbanist_400Regular' }}
           />
         </View>
 
         <View>
-          <Text className="text-gray-700 mb-2 font-medium">Confirm Password</Text>
+          <Text className="text-deen-dark mb-2" style={{ fontFamily: 'Urbanist_500Medium' }}>Confirm Password</Text>
           <TextInput
-            className="border border-gray-300 rounded-lg px-4 py-3 text-lg"
+            className="bg-white border border-gray-200 rounded-2xl px-4 py-4 text-lg"
             placeholder="Confirm your password"
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry
             autoComplete="new-password"
+            style={{ fontFamily: 'Urbanist_400Regular' }}
           />
         </View>
       </View>
 
       <TouchableOpacity
-        className={`py-4 rounded-lg mb-4 ${
-          isLoading ? 'bg-gray-400' : 'bg-green-600'
+        className={`py-4 rounded-2xl mb-4 ${
+          isLoading ? 'bg-gray-400' : 'bg-deen-primary'
         }`}
         onPress={handleSignUp}
         disabled={isLoading}
       >
-        <Text className="text-white text-center text-lg font-semibold">
+        <Text className="text-white text-center text-lg" style={{ fontFamily: 'Urbanist_600SemiBold' }}>
           {isLoading ? 'Creating Account...' : 'Create Account'}
         </Text>
       </TouchableOpacity>
 
       <View className="flex-row justify-center">
-        <Text className="text-gray-600">Already have an account? </Text>
+        <Text className="text-gray-600" style={{ fontFamily: 'Urbanist_400Regular' }}>Already have an account? </Text>
         <TouchableOpacity onPress={() => router.push('/auth/sign-in')}>
-          <Text className="text-green-600 font-semibold">Sign In</Text>
+          <Text className="text-deen-primary" style={{ fontFamily: 'Urbanist_600SemiBold' }}>Sign In</Text>
         </TouchableOpacity>
       </View>
     </View>

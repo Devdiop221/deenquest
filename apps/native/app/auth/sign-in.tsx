@@ -24,7 +24,7 @@ export default function SignInScreen() {
       if (result.error) {
         Alert.alert('Sign In Failed', result.error.message);
       } else {
-        router.replace('/(drawer)');
+        router.replace('/(tabs)');
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to sign in');
