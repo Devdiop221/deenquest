@@ -2,7 +2,9 @@ import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { useLocalSearchParams, router, useNavigation } from 'expo-router';
 import { useLayoutEffect } from 'react';
 import { trpc } from '../../lib/trpc';
-import { Award, Play, BookOpen } from 'lucide-react-native';
+import { Award, Play } from 'lucide-react-native';
+import { ScreenHeader } from '../../components/screen-header';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CategoryScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -40,7 +42,7 @@ export default function CategoryScreen() {
 
   const startCategoryQuiz = () => {
     // Start quiz with questions from this category only
-    router.push(`/quiz/category-${id}`);
+    router.push(`/quiz/category?categoryId=${id}&categoryName=${encodeURIComponent(category.name)}`);
   };
 
   const getDifficultyColor = (difficulty: number) => {
@@ -62,24 +64,26 @@ export default function CategoryScreen() {
   };
 
   return (
-    <View className="flex-1 bg-deen-secondary">
+    <SafeAreaView className="flex-1 bg-deen-secondary">
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 120 }}>
         <View className="p-6">
-          {/* Category Header */}
-          <View className="bg-white rounded-3xl p-8 mb-8 items-center shadow-sm">
-            <Text className="text-6xl mb-6">{category.icon}</Text>
-            <Text
-              className="text-3xl text-deen-dark mb-4 text-center"
-              style={{ fontFamily: 'SpaceGrotesk_700Bold' }}
-            >
-              {category.name}
-            </Text>
-            <Text
-              className="text-gray-600 text-center mb-8 leading-6"
-              style={{ fontFamily: 'Urbanist_400Regular' }}
-            >
-              {category.description}
-            </Text>
+          {/* Custom Header */}
+          <ScreenHeader
+            title={category.name}
+            showBack={true}
+          />
+
+          {/* Category Info */}
+          <View className="bg-white rounded-3xl p-6 mb-8 shadow-sm">
+            <View className="items-center mb-6">
+              <Text className="text-6xl mb-4">{category.icon}</Text>
+              <Text
+                className="text-gray-600 text-center leading-6"
+                style={{ fontFamily: 'Urbanist_400Regular' }}
+              >
+                {category.description}
+              </Text>
+            </View>
 
             <View className="flex-row items-center justify-between w-full">
               <View className="items-center">
@@ -213,6 +217,6 @@ export default function CategoryScreen() {
           </View>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }

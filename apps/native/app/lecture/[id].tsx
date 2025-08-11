@@ -3,6 +3,8 @@ import { useLocalSearchParams, router, useNavigation } from 'expo-router';
 import { useState, useEffect, useLayoutEffect } from 'react';
 import { Play, Pause, SkipBack, SkipForward, Heart, BookOpen } from 'lucide-react-native';
 import { trpc } from '../../lib/trpc';
+import { ScreenHeader } from '../../components/screen-header';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function LectureScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -87,10 +89,16 @@ export default function LectureScreen() {
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <View className="flex-1 bg-deen-secondary">
+    <SafeAreaView className="flex-1 bg-deen-secondary">
       <ScrollView className="flex-1">
         <View className="p-6">
-          {/* Header */}
+          {/* Custom Header */}
+          <ScreenHeader
+            title={lecture.title}
+            showBack={true}
+          />
+
+          {/* Lecture Info */}
           <View className="bg-white rounded-3xl p-6 mb-6 shadow-sm">
             <View className="flex-row items-center justify-between mb-4">
               <View className="bg-deen-secondary px-3 py-1 rounded-full">
@@ -113,13 +121,6 @@ export default function LectureScreen() {
                 />
               </TouchableOpacity>
             </View>
-
-            <Text
-              className="text-2xl text-deen-dark mb-3"
-              style={{ fontFamily: "SpaceGrotesk_700Bold" }}
-            >
-              {lecture.title}
-            </Text>
 
             {lecture.description && (
               <Text
@@ -273,6 +274,6 @@ export default function LectureScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }

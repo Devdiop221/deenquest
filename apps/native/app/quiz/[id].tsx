@@ -23,13 +23,13 @@ export default function QuizDetailScreen() {
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [userAnswers, setUserAnswers] = useState<number[]>([]);
 
-  const { data: allQuizzes, isLoading } = trpc.quizzes.getAll.useQuery();
+  const { data: quiz, isLoading } = trpc.quizzes.getById.useQuery({ id: id! });
   const updateStatsMutation = trpc.badges.updateStats.useMutation();
   const checkBadgesMutation = trpc.badges.checkBadges.useMutation();
 
-  // Get current quiz from all quizzes
-  const currentQuiz = allQuizzes?.[currentQuestionIndex];
-  const totalQuestions = Math.min(allQuizzes?.length || 0, 30);
+  // Single quiz mode
+  const currentQuiz = quiz;
+  const totalQuestions = 1;
 
   // Reset state when moving to next question
   useEffect(() => {
@@ -47,8 +47,10 @@ export default function QuizDetailScreen() {
 
   if (!currentQuiz && !quizCompleted) {
     return (
-      <View className="flex-1 justify-center items-center bg-white">
-        <Text className="text-lg text-red-600">No questions available</Text>
+      <View className="flex-1 justify-center items-center bg-deen-secondary">
+        <Text className="text-lg text-red-600" style={{ fontFamily: 'Urbanist_500Medium' }}>
+          Quiz not found
+        </Text>
       </View>
     );
   }
@@ -69,8 +71,7 @@ export default function QuizDetailScreen() {
             className="text-lg text-gray-600 mb-6 text-center"
             style={{ fontFamily: "Urbanist_400Regular" }}
           >
-            You answered {correctAnswers} out of {totalQuestions} questions
-            correctly
+            {correctAnswers > 0 ? "Correct! Well done!" : "Keep practicing to improve!"}
           </Text>
           <View className="bg-deen-secondary rounded-2xl p-4 mb-6 w-full">
             <Text
@@ -123,27 +124,24 @@ export default function QuizDetailScreen() {
   };
 
   const handleNextQuestion = async () => {
-    if (currentQuestionIndex + 1 >= totalQuestions) {
-      setQuizCompleted(true);
+    // For single quiz, complete immediately after first question
+    setQuizCompleted(true);
 
-      // Award XP and update stats
-      const xpGained = correctAnswers * 10; // 10 XP per correct answer
-      try {
-        await updateStatsMutation.mutateAsync({
-          userId: "demo-user", // Using demo user for now
-          xpGained,
-          quizCompleted: true,
-        });
+    // Award XP and update stats
+    const xpGained = correctAnswers * 10; // 10 XP per correct answer
+    try {
+      await updateStatsMutation.mutateAsync({
+        userId: "demo-user", // Using demo user for now
+        xpGained,
+        quizCompleted: true,
+      });
 
-        // Check for new badges
-        await checkBadgesMutation.mutateAsync({
-          userId: "demo-user",
-        });
-      } catch (error) {
-        console.error("Failed to update stats:", error);
-      }
-    } else {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      // Check for new badges
+      await checkBadgesMutation.mutateAsync({
+        userId: "demo-user",
+      });
+    } catch (error) {
+      console.error("Failed to update stats:", error);
     }
   };
 
@@ -179,7 +177,7 @@ export default function QuizDetailScreen() {
               className="text-sm text-gray-500"
               style={{ fontFamily: "Urbanist_400Regular" }}
             >
-              Question {currentQuestionIndex + 1} of {totalQuestions}
+              Single Quiz Challenge
             </Text>
           </View>
 
@@ -415,9 +413,7 @@ export default function QuizDetailScreen() {
                   className="text-white text-center text-lg"
                   style={{ fontFamily: "Urbanist_700Bold" }}
                 >
-                  {currentQuestionIndex + 1 >= totalQuestions
-                    ? "Finish Quiz"
-                    : "Next Question"}
+                  Finish Quiz
                 </Text>
               </TouchableOpacity>
             )}

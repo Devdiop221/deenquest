@@ -1,12 +1,16 @@
 import { View, Text, TouchableOpacity, ScrollView, Alert } from "react-native";
-import { router, useNavigation } from "expo-router";
+import { router, useLocalSearchParams, useNavigation } from "expo-router";
 import { useState, useEffect, useLayoutEffect } from "react";
 import { Award, Shuffle } from "lucide-react-native";
 import { trpc } from "../../lib/trpc";
 import { ScreenHeader } from "../../components/screen-header";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function RandomQuizScreen() {
+export default function CategoryQuizScreen() {
+  const { categoryId, categoryName } = useLocalSearchParams<{
+    categoryId: string;
+    categoryName: string;
+  }>();
   const navigation = useNavigation();
 
   // Force hide header
@@ -15,28 +19,22 @@ export default function RandomQuizScreen() {
       headerShown: false,
     });
   }, [navigation]);
+
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [quizCompleted, setQuizCompleted] = useState(false);
-  const [shuffledQuizzes, setShuffledQuizzes] = useState<any[]>([]);
 
-  const { data: allQuizzes, isLoading } = trpc.quizzes.getAll.useQuery();
+  const { data: categoryQuizzes, isLoading } = trpc.quizzes.getByCategory.useQuery({
+    categoryId: categoryId!
+  });
   const updateStatsMutation = trpc.badges.updateStats.useMutation();
   const checkBadgesMutation = trpc.badges.checkBadges.useMutation();
 
-  // Shuffle quizzes when data is loaded
-  useEffect(() => {
-    if (allQuizzes && allQuizzes.length > 0) {
-      const shuffled = [...allQuizzes].sort(() => Math.random() - 0.5);
-      setShuffledQuizzes(shuffled.slice(0, 20)); // Take 20 random questions
-    }
-  }, [allQuizzes]);
-
-  const currentQuiz = shuffledQuizzes[currentQuestionIndex];
-  const totalQuestions = shuffledQuizzes.length;
+  const currentQuiz = categoryQuizzes?.[currentQuestionIndex];
+  const totalQuestions = categoryQuizzes?.length || 0;
 
   // Reset state when moving to next question
   useEffect(() => {
@@ -48,11 +46,8 @@ export default function RandomQuizScreen() {
     return (
       <View className="flex-1 justify-center items-center bg-deen-secondary">
         <Shuffle size={48} color="#015055" />
-        <Text
-          className="text-lg mt-4"
-          style={{ fontFamily: "Urbanist_500Medium" }}
-        >
-          Preparing random quiz...
+        <Text className="text-lg mt-4" style={{ fontFamily: 'Urbanist_500Medium' }}>
+          Loading {categoryName} quiz...
         </Text>
       </View>
     );
@@ -61,11 +56,8 @@ export default function RandomQuizScreen() {
   if (!currentQuiz && !quizCompleted) {
     return (
       <View className="flex-1 justify-center items-center bg-deen-secondary">
-        <Text
-          className="text-lg text-red-600"
-          style={{ fontFamily: "Urbanist_500Medium" }}
-        >
-          No questions available
+        <Text className="text-lg text-red-600" style={{ fontFamily: 'Urbanist_500Medium' }}>
+          No questions available for this category
         </Text>
       </View>
     );
@@ -93,7 +85,7 @@ export default function RandomQuizScreen() {
             className="text-2xl text-deen-dark mb-2 text-center"
             style={{ fontFamily: "SpaceGrotesk_700Bold" }}
           >
-            Random Quiz Complete!
+            {categoryName} Quiz Complete!
           </Text>
           <Text
             className="text-lg text-gray-600 mb-6 text-center"
@@ -158,27 +150,21 @@ export default function RandomQuizScreen() {
                 className="text-deen-dark text-center"
                 style={{ fontFamily: "Urbanist_600SemiBold" }}
               >
-                Back Home
+                Back to Category
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               className="flex-1 bg-deen-primary py-4 px-6 rounded-2xl"
               onPress={() => {
-                // Reset and start new random quiz
+                // Reset and start new quiz
                 setCurrentQuestionIndex(0);
                 setScore(0);
                 setCorrectAnswers(0);
                 setQuizCompleted(false);
-                if (allQuizzes) {
-                  const shuffled = [...allQuizzes].sort(
-                    () => Math.random() - 0.5
-                  );
-                  setShuffledQuizzes(shuffled.slice(0, 20));
-                }
               }}
               style={{
-                shadowColor: "#015055",
+                shadowColor: '#015055',
                 shadowOffset: { width: 0, height: 4 },
                 shadowOpacity: 0.2,
                 shadowRadius: 12,
@@ -205,7 +191,7 @@ export default function RandomQuizScreen() {
     }
 
     const isCorrect = selectedAnswer === currentQuiz?.correctAnswerIndex;
-    const xpEarned = isCorrect ? currentQuiz?.xpReward || 10 : 0;
+    const xpEarned = isCorrect ? (currentQuiz?.xpReward || 10) : 0;
 
     setScore(score + xpEarned);
     if (isCorrect) {
@@ -223,32 +209,34 @@ export default function RandomQuizScreen() {
       const xpGained = correctAnswers * 10; // 10 XP per correct answer
       try {
         await updateStatsMutation.mutateAsync({
-          userId: "demo-user", // Using demo user for now
+          userId: 'demo-user', // Using demo user for now
           xpGained,
           quizCompleted: true,
         });
 
         // Check for new badges
         await checkBadgesMutation.mutateAsync({
-          userId: "demo-user",
+          userId: 'demo-user',
         });
       } catch (error) {
-        console.error("Failed to update stats:", error);
+        console.error('Failed to update stats:', error);
       }
     } else {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     }
   };
 
-  const options = (currentQuiz?.options as string[]) || [];
+  const options = currentQuiz?.options as string[] || [];
   const isCorrect = selectedAnswer === currentQuiz?.correctAnswerIndex;
 
   return (
     <SafeAreaView className="flex-1 bg-deen-secondary">
       <ScrollView className="flex-1">
         <View className="p-6">
-          {/* Custom Header */}
-          <ScreenHeader title="Quiz Challenge" showBack={true} />
+          <ScreenHeader
+            title={`${categoryName} Quiz`}
+            showBack={true}
+          />
 
           {/* Quiz Info Card */}
           <View className="bg-white rounded-2xl p-4 mb-6 shadow-sm">
@@ -288,26 +276,18 @@ export default function RandomQuizScreen() {
                   className="text-gray-600 text-sm"
                   style={{ fontFamily: "Urbanist_400Regular" }}
                 >
-                  {Math.round(
-                    ((currentQuestionIndex + 1) / totalQuestions) * 100
-                  )}
-                  %
+                  {Math.round(((currentQuestionIndex + 1) / totalQuestions) * 100)}%
                 </Text>
               </View>
               <View className="bg-gray-200 rounded-full h-2">
                 <View
                   className="bg-deen-primary rounded-full h-2"
-                  style={{
-                    width: `${
-                      ((currentQuestionIndex + 1) / totalQuestions) * 100
-                    }%`,
-                  }}
+                  style={{ width: `${((currentQuestionIndex + 1) / totalQuestions) * 100}%` }}
                 />
               </View>
             </View>
           </View>
-
-          {/* Question Card */}
+   {/* Question Card */}
           <View className="bg-white rounded-3xl p-6 mb-6 shadow-sm">
             <View className="flex-row items-center justify-between mb-4">
               <View className="bg-deen-secondary px-3 py-1 rounded-full">
@@ -315,7 +295,7 @@ export default function RandomQuizScreen() {
                   className="text-deen-primary text-sm"
                   style={{ fontFamily: "Urbanist_600SemiBold" }}
                 >
-                  {currentQuiz?.category?.icon} {currentQuiz?.category?.name}
+                  {categoryName}
                 </Text>
               </View>
               <View className="flex-row items-center">
@@ -363,7 +343,7 @@ export default function RandomQuizScreen() {
                   onPress={() => !showResult && setSelectedAnswer(index)}
                   disabled={showResult}
                   style={{
-                    shadowColor: selectedAnswer === index ? "#015055" : "#000",
+                    shadowColor: selectedAnswer === index ? '#015055' : '#000',
                     shadowOffset: { width: 0, height: 2 },
                     shadowOpacity: selectedAnswer === index ? 0.15 : 0.05,
                     shadowRadius: 8,
@@ -371,28 +351,21 @@ export default function RandomQuizScreen() {
                   }}
                 >
                   <View className="flex-row items-center">
-                    <View
-                      className={`w-6 h-6 rounded-full border-2 mr-4 items-center justify-center ${
-                        showResult && index === currentQuiz?.correctAnswerIndex
-                          ? "bg-green-500 border-green-500"
-                          : showResult &&
-                            index === selectedAnswer &&
-                            index !== currentQuiz?.correctAnswerIndex
-                          ? "bg-red-500 border-red-500"
-                          : selectedAnswer === index && !showResult
-                          ? "bg-white border-white"
-                          : "border-gray-300"
-                      }`}
-                    >
-                      {showResult &&
-                        index === currentQuiz?.correctAnswerIndex && (
-                          <Text className="text-white text-xs">✓</Text>
-                        )}
-                      {showResult &&
-                        index === selectedAnswer &&
-                        index !== currentQuiz?.correctAnswerIndex && (
-                          <Text className="text-white text-xs">✗</Text>
-                        )}
+                    <View className={`w-6 h-6 rounded-full border-2 mr-4 items-center justify-center ${
+                      showResult && index === currentQuiz?.correctAnswerIndex
+                        ? "bg-green-500 border-green-500"
+                        : showResult && index === selectedAnswer && index !== currentQuiz?.correctAnswerIndex
+                        ? "bg-red-500 border-red-500"
+                        : selectedAnswer === index && !showResult
+                        ? "bg-white border-white"
+                        : "border-gray-300"
+                    }`}>
+                      {showResult && index === currentQuiz?.correctAnswerIndex && (
+                        <Text className="text-white text-xs">✓</Text>
+                      )}
+                      {showResult && index === selectedAnswer && index !== currentQuiz?.correctAnswerIndex && (
+                        <Text className="text-white text-xs">✗</Text>
+                      )}
                       {selectedAnswer === index && !showResult && (
                         <View className="w-3 h-3 bg-deen-primary rounded-full" />
                       )}
@@ -408,16 +381,15 @@ export default function RandomQuizScreen() {
               );
             })}
           </View>
-
-          {/* Explanation */}
+         {/* Explanation */}
           {showResult && (
             <View className="bg-white rounded-3xl p-6 mb-6 shadow-sm">
               <View className="flex-row items-center mb-4">
-                <Text className="text-2xl mr-2">{isCorrect ? "🎉" : "😔"}</Text>
+                <Text className="text-2xl mr-2">
+                  {isCorrect ? "🎉" : "😔"}
+                </Text>
                 <Text
-                  className={`text-lg ${
-                    isCorrect ? "text-green-600" : "text-red-600"
-                  }`}
+                  className={`text-lg ${isCorrect ? "text-green-600" : "text-red-600"}`}
                   style={{ fontFamily: "SpaceGrotesk_700Bold" }}
                 >
                   {isCorrect ? "Correct!" : "Incorrect"}
@@ -434,18 +406,15 @@ export default function RandomQuizScreen() {
               </View>
 
               <View className="flex-row items-center">
-                <View
-                  className={`w-4 h-4 rounded-full mr-3 ${
-                    isCorrect ? "bg-green-500" : "bg-red-500"
-                  }`}
-                />
+                <View className={`w-4 h-4 rounded-full mr-3 ${isCorrect ? "bg-green-500" : "bg-red-500"}`} />
                 <Text
                   className="text-deen-dark flex-1"
                   style={{ fontFamily: "Urbanist_500Medium" }}
                 >
                   {isCorrect
                     ? `Great job! You earned ${currentQuiz?.xpReward || 10} XP!`
-                    : "Don't worry, keep learning and you'll improve!"}
+                    : "Don't worry, keep learning and you'll improve!"
+                  }
                 </Text>
               </View>
             </View>
@@ -461,7 +430,7 @@ export default function RandomQuizScreen() {
                 onPress={handleSubmit}
                 disabled={selectedAnswer === null}
                 style={{
-                  shadowColor: selectedAnswer !== null ? "#015055" : "#000",
+                  shadowColor: selectedAnswer !== null ? '#015055' : '#000',
                   shadowOffset: { width: 0, height: 4 },
                   shadowOpacity: selectedAnswer !== null ? 0.2 : 0.1,
                   shadowRadius: 12,
@@ -480,7 +449,7 @@ export default function RandomQuizScreen() {
                 className="py-5 px-6 rounded-2xl bg-deen-primary"
                 onPress={handleNextQuestion}
                 style={{
-                  shadowColor: "#015055",
+                  shadowColor: '#015055',
                   shadowOffset: { width: 0, height: 4 },
                   shadowOpacity: 0.2,
                   shadowRadius: 12,
@@ -491,9 +460,7 @@ export default function RandomQuizScreen() {
                   className="text-white text-center text-lg"
                   style={{ fontFamily: "Urbanist_700Bold" }}
                 >
-                  {currentQuestionIndex + 1 >= totalQuestions
-                    ? "Finish Quiz"
-                    : "Next Question"}
+                  {currentQuestionIndex + 1 >= totalQuestions ? "Finish Quiz" : "Next Question"}
                 </Text>
               </TouchableOpacity>
             )}

@@ -4,15 +4,24 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { trpc } from "../../lib/trpc";
 
 export default function QuizScreen() {
-  const { data: quizzes, isLoading } = trpc.quizzes.getAll.useQuery();
+  const { data: quizzes, isLoading: quizzesLoading } = trpc.quizzes.getAll.useQuery();
+  const { data: categories, isLoading: categoriesLoading } = trpc.categories.getAll.useQuery();
 
-  if (isLoading) {
+  if (quizzesLoading || categoriesLoading) {
     return (
-      <View className="flex-1 justify-center items-center bg-white">
-        <Text className="text-lg">Loading quizzes...</Text>
+      <View className="flex-1 justify-center items-center bg-deen-secondary">
+        <Text className="text-lg" style={{ fontFamily: 'Urbanist_500Medium' }}>
+          Loading quizzes...
+        </Text>
       </View>
     );
   }
+
+  // Group quizzes by category
+  const quizzesByCategory = categories?.map(category => ({
+    ...category,
+    quizzes: quizzes?.filter(quiz => quiz.category?.id === category.id) || []
+  })) || [];
 
   const getDifficultyColor = (difficulty: number) => {
     switch (difficulty) {
@@ -67,67 +76,132 @@ export default function QuizScreen() {
             </TouchableOpacity>
           </View>
 
-          <View className="space-y-4">
-            {quizzes?.map((quiz) => (
-              <TouchableOpacity
-                key={quiz.id}
-                className="bg-white rounded-2xl p-6 mb-4"
-                onPress={() => router.push(`/quiz/${quiz.id}`)}
-                style={{
-                  shadowColor: "#000",
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.1,
-                  shadowRadius: 8,
-                  elevation: 3,
-                }}
-              >
-                <View className="flex-row justify-between items-start mb-3">
-                  <Text
-                    className="text-xl text-deen-dark flex-1"
-                    style={{ fontFamily: "SpaceGrotesk_600SemiBold" }}
-                  >
-                    {quiz.title}
-                  </Text>
-                  <View
-                    className={`px-3 py-1 rounded-full ${getDifficultyColor(
-                      quiz.difficulty
-                    )}`}
-                  >
+          {/* Categories with Quizzes */}
+          {quizzesByCategory.map((category) => (
+            <View key={category.id} className="mb-8">
+              {/* Category Header */}
+              <View className="flex-row items-center justify-between mb-4">
+                <View className="flex-row items-center">
+                  <Text className="text-3xl mr-3">{category.icon}</Text>
+                  <View>
                     <Text
-                      className="text-xs"
-                      style={{ fontFamily: "Urbanist_500Medium" }}
+                      className="text-xl text-deen-dark"
+                      style={{ fontFamily: "SpaceGrotesk_700Bold" }}
                     >
-                      {getDifficultyText(quiz.difficulty)}
+                      {category.name}
                     </Text>
-                  </View>
-                </View>
-
-                <Text
-                  className="text-gray-600 mb-4"
-                  style={{ fontFamily: "Urbanist_400Regular" }}
-                >
-                  {quiz.question}
-                </Text>
-
-                <View className="flex-row justify-between items-center">
-                  <View className="flex-row items-center">
                     <Text
-                      className="text-sm text-gray-500 mr-4"
+                      className="text-sm text-gray-600"
                       style={{ fontFamily: "Urbanist_400Regular" }}
                     >
-                      {quiz.category?.icon} {quiz.category?.name}
+                      {category.quizzes.length} questions
                     </Text>
                   </View>
+                </View>
+                <TouchableOpacity
+                  className="bg-deen-primary px-4 py-2 rounded-xl"
+                  onPress={() => router.push(`/quiz/category?categoryId=${category.id}&categoryName=${encodeURIComponent(category.name)}`)}
+                  style={{
+                    shadowColor: '#015055',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 4,
+                    elevation: 2,
+                  }}
+                >
                   <Text
-                    className="text-sm text-deen-accent"
+                    className="text-white text-sm"
                     style={{ fontFamily: "Urbanist_600SemiBold" }}
                   >
-                    +{quiz.xpReward} XP
+                    Start Quiz
                   </Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
+                </TouchableOpacity>
+              </View>
+
+              {/* Quiz List for Category */}
+              <View className="space-y-3">
+                {category.quizzes.slice(0, 3).map((quiz) => (
+                  <TouchableOpacity
+                    key={quiz.id}
+                    className="bg-white rounded-2xl p-4 mb-3"
+                    onPress={() => router.push(`/quiz/${quiz.id}`)}
+                    style={{
+                      shadowColor: "#000",
+                      shadowOffset: { width: 0, height: 1 },
+                      shadowOpacity: 0.05,
+                      shadowRadius: 4,
+                      elevation: 2,
+                    }}
+                  >
+                    <View className="flex-row justify-between items-start mb-2">
+                      <Text
+                        className="text-lg text-deen-dark flex-1 mr-3"
+                        style={{ fontFamily: "SpaceGrotesk_600SemiBold" }}
+                      >
+                        {quiz.title}
+                      </Text>
+                      <View
+                        className={`px-2 py-1 rounded-full ${getDifficultyColor(
+                          quiz.difficulty
+                        )}`}
+                      >
+                        <Text
+                          className="text-xs"
+                          style={{ fontFamily: "Urbanist_500Medium" }}
+                        >
+                          {getDifficultyText(quiz.difficulty)}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <Text
+                      className="text-gray-600 mb-3 text-sm"
+                      style={{ fontFamily: "Urbanist_400Regular" }}
+                      numberOfLines={2}
+                    >
+                      {quiz.question}
+                    </Text>
+
+                    <View className="flex-row justify-between items-center">
+                      <Text
+                        className="text-xs text-gray-500"
+                        style={{ fontFamily: "Urbanist_400Regular" }}
+                      >
+                        Individual Question
+                      </Text>
+                      <Text
+                        className="text-sm text-deen-accent"
+                        style={{ fontFamily: "Urbanist_600SemiBold" }}
+                      >
+                        +{quiz.xpReward} XP
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+
+                {/* Show More Button */}
+                {category.quizzes.length > 3 && (
+                  <TouchableOpacity
+                    className="bg-gray-100 rounded-2xl p-4 items-center"
+                    onPress={() => router.push(`/category/${category.id}`)}
+                  >
+                    <Text
+                      className="text-gray-600"
+                      style={{ fontFamily: "Urbanist_500Medium" }}
+                    >
+                      +{category.quizzes.length - 3} more questions
+                    </Text>
+                    <Text
+                      className="text-gray-500 text-sm mt-1"
+                      style={{ fontFamily: "Urbanist_400Regular" }}
+                    >
+                      View all {category.name} questions
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+          ))}
         </View>
       </ScrollView>
     </SafeAreaView>

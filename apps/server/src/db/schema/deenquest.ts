@@ -66,7 +66,10 @@ export const userStats = pgTable("user_stats", {
   totalXp: integer("total_xp").default(0),
   level: integer("level").default(1),
   quizzesCompleted: integer("quizzes_completed").default(0),
-  lecturesCompleted: integer("lectures_completed").default(0),
+  lecturesListened: integer("lectures_listened").default(0),
+  currentStreak: integer("current_streak").default(0),
+  longestStreak: integer("longest_streak").default(0),
+  lastActivityDate: timestamp("last_activity_date"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

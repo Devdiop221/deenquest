@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { router, publicProcedure } from '../lib/trpc';
 import { db } from '../db';
-import { badges, userBadges, userStats } from '../db/schema/badges';
+import { badges, userBadges, userStats } from '../db/schema/deenquest';
 import { eq, and } from 'drizzle-orm';
 
 export const badgesRouter = router({
